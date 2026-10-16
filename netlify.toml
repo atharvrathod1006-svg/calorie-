@@ -1,0 +1,8 @@
+# Netlify Configuration for NutriGlance Calorie Tracker
+[build]
+  publish = "frontend"
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200

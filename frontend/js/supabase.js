@@ -65,10 +65,12 @@ const SupabaseService = {
   client: null,
 
   getUrl() {
+    if (window.__ENV__ && window.__ENV__.SUPABASE_URL) return window.__ENV__.SUPABASE_URL;
     return localStorage.getItem(SUPABASE_STORAGE_URL_KEY) || "";
   },
 
   getAnonKey() {
+    if (window.__ENV__ && window.__ENV__.SUPABASE_ANON_KEY) return window.__ENV__.SUPABASE_ANON_KEY;
     return localStorage.getItem(SUPABASE_STORAGE_KEY_KEY) || "";
   },
 
