@@ -67,51 +67,22 @@ const Api = {
   isOnline: false,
 
   async checkHealth() {
-    try {
-      const res = await fetch(`${API_BASE}/api/health`, { method: "GET", headers: { "Accept": "application/json" } });
-      if (res.ok) {
-        this.isOnline = true;
-        return true;
-      }
-    } catch (e) {
-      this.isOnline = false;
+    if (window.SupabaseService && window.SupabaseService.isConfigured()) {
+      const res = await window.SupabaseService.testConnection();
+      this.isOnline = res.success;
+      return res.success;
     }
+    this.isOnline = false;
     return false;
   },
 
   async calculate(payload) {
-    if (this.isOnline) {
-      try {
-        const res = await fetch(`${API_BASE}/api/calculate`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload)
-        });
-        if (res.ok) {
-          const json = await res.json();
-          return json.data;
-        }
-      } catch (e) {
-        console.warn("Backend call failed, using client-side calculation fallback:", e);
-      }
-    }
-    // Client-side computation fallback
+    // Immediate 0ms local scientific calculation engine
     return this.calculateClientSide(payload);
   },
 
   async getFoods(query = "", category = "all") {
-    if (this.isOnline) {
-      try {
-        const res = await fetch(`${API_BASE}/api/foods?q=${encodeURIComponent(query)}&category=${encodeURIComponent(category)}`);
-        if (res.ok) {
-          const json = await res.json();
-          return json.foods;
-        }
-      } catch (e) {
-        console.warn("Backend foods fetch failed, using local list:", e);
-      }
-    }
-    // Local fallback search
+    // Local searchable food database with rich vegetarian items
     return FALLBACK_FOODS.filter(f => {
       const catLower = (category || "all").toLowerCase();
       let matchCat = false;
@@ -140,16 +111,21 @@ const Api = {
     const todayStr = new Date().toISOString().split("T")[0];
     const targetDate = date || todayStr;
 
-    if (this.isOnline) {
-      try {
-        const url = targetDate === "all" ? `${API_BASE}/api/meals?date=all` : `${API_BASE}/api/meals?date=${encodeURIComponent(targetDate)}`;
-        const res = await fetch(url);
-        if (res.ok) {
-          const json = await res.json();
-          return json;
-        }
-      } catch (e) {
-        console.warn("Backend meals fetch failed, using localStorage:", e);
+    // Check Supabase if configured
+    if (window.SupabaseService && window.SupabaseService.isConfigured()) {
+      const remoteMeals = await window.SupabaseService.fetchMeals(targetDate);
+      if (remoteMeals && Array.isArray(remoteMeals) && remoteMeals.length > 0) {
+        return {
+          success: true,
+          date: targetDate,
+          meals: remoteMeals,
+          totals: {
+            calories: remoteMeals.reduce((sum, m) => sum + (m.calories || 0), 0),
+            protein: Math.round(remoteMeals.reduce((sum, m) => sum + (m.protein || 0), 0) * 10) / 10,
+            carbs: Math.round(remoteMeals.reduce((sum, m) => sum + (m.carbs || 0), 0) * 10) / 10,
+            fat: Math.round(remoteMeals.reduce((sum, m) => sum + (m.fat || 0), 0) * 10) / 10,
+          }
+        };
       }
     }
 
@@ -173,25 +149,7 @@ const Api = {
   async addMeal(mealData) {
     const todayStr = new Date().toISOString().split("T")[0];
     const entryDate = mealData.date || todayStr;
-    const payload = { ...mealData, date: entryDate };
 
-    if (this.isOnline) {
-      try {
-        const res = await fetch(`${API_BASE}/api/meals`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload)
-        });
-        if (res.ok) {
-          const json = await res.json();
-          return json.entry;
-        }
-      } catch (e) {
-        console.warn("Backend add meal failed, using local storage:", e);
-      }
-    }
-
-    // Local fallback add
     this.ensureLocalHistorySeeded();
     let local = JSON.parse(localStorage.getItem("calorie_meals") || "[]");
     let entry;
@@ -251,35 +209,30 @@ const Api = {
         created_at: new Date().toISOString()
       };
     }
+
     local.push(entry);
     localStorage.setItem("calorie_meals", JSON.stringify(local));
+
+    // Save to Supabase if configured
+    if (window.SupabaseService && window.SupabaseService.isConfigured()) {
+      window.SupabaseService.insertMeal(entry).catch(err => console.warn("Supabase insert meal error:", err));
+    }
+
     return entry;
   },
 
   async deleteMeal(mealId) {
-    if (this.isOnline) {
-      try {
-        const res = await fetch(`${API_BASE}/api/meals/${mealId}`, { method: "DELETE" });
-        if (res.ok) return true;
-      } catch (e) {
-        console.warn("Backend delete meal failed, using local storage:", e);
-      }
-    }
     let local = JSON.parse(localStorage.getItem("calorie_meals") || "[]");
     local = local.filter(m => m.id !== mealId);
     localStorage.setItem("calorie_meals", JSON.stringify(local));
+
+    if (window.SupabaseService && window.SupabaseService.isConfigured()) {
+      window.SupabaseService.deleteMeal(mealId).catch(err => console.warn("Supabase delete meal error:", err));
+    }
     return true;
   },
 
   async clearMeals(date = "") {
-    if (this.isOnline) {
-      try {
-        const url = date ? `${API_BASE}/api/meals?date=${encodeURIComponent(date)}` : `${API_BASE}/api/meals`;
-        await fetch(url, { method: "DELETE" });
-      } catch (e) {
-        console.warn("Backend clear meals failed:", e);
-      }
-    }
     if (date) {
       let local = JSON.parse(localStorage.getItem("calorie_meals") || "[]");
       local = local.filter(m => m.date !== date);
@@ -287,31 +240,16 @@ const Api = {
     } else {
       localStorage.removeItem("calorie_meals");
     }
+
+    if (window.SupabaseService && window.SupabaseService.isConfigured()) {
+      window.SupabaseService.clearMeals(date).catch(err => console.warn("Supabase clear meals error:", err));
+    }
     return true;
   },
 
   async getHistory(period = "last_week", startDate = "", endDate = "", targetCalories = 2150) {
-    if (this.isOnline) {
-      try {
-        const params = new URLSearchParams({
-          period: period,
-          start_date: startDate || "",
-          end_date: endDate || "",
-          target_calories: targetCalories || 2150
-        });
-        const res = await fetch(`${API_BASE}/api/history?${params.toString()}`);
-        if (res.ok) {
-          const json = await res.json();
-          return json;
-        }
-      } catch (e) {
-        console.warn("Backend history fetch failed, calculating from local data:", e);
-      }
-    }
-
-    // Local client-side fallback calculation for history
     this.ensureLocalHistorySeeded();
-    const local = JSON.parse(localStorage.getItem("calorie_meals") || "[]");
+    let local = JSON.parse(localStorage.getItem("calorie_meals") || "[]");
     const today = new Date();
 
     let start = new Date(today);
@@ -336,6 +274,14 @@ const Api = {
 
     const startIso = start.toISOString().split("T")[0];
     const endIso = end.toISOString().split("T")[0];
+
+    // If Supabase configured, check if we have remote records
+    if (window.SupabaseService && window.SupabaseService.isConfigured()) {
+      const remote = await window.SupabaseService.fetchHistory(startIso, endIso);
+      if (remote && Array.isArray(remote) && remote.length > 0) {
+        local = remote;
+      }
+    }
 
     const dailyBreakdown = [];
     const periodMeals = [];
@@ -411,26 +357,8 @@ const Api = {
   },
 
   async googleAuth(profile) {
-    if (this.isOnline) {
-      try {
-        const res = await fetch(`${API_BASE}/api/auth/google`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(profile)
-        });
-        if (res.ok) {
-          const json = await res.json();
-          localStorage.setItem("nutriglance_user", JSON.stringify(json.user));
-          return json.user;
-        }
-      } catch (e) {
-        console.warn("Backend auth failed, saving profile locally:", e);
-      }
-    }
-
-    // Local profile fallback
     const user = {
-      id: profile.sub || "user_" + Math.random().toString(36).substr(2, 9),
+      id: profile.sub || profile.id || "user_" + Math.random().toString(36).substr(2, 9),
       email: profile.email || "alex.morgan@gmail.com",
       name: profile.name || "Alex Morgan",
       picture: profile.picture || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=120&auto=format&fit=crop&q=80",

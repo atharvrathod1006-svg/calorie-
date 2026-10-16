@@ -1,5 +1,5 @@
 @echo off
-title NutriGlance Calorie Tracker Server
+title NutriGlance Calorie Tracker (Supabase Ready)
 echo ===================================================
 echo     Starting NutriGlance Calorie Tracker
 echo ===================================================
@@ -12,16 +12,16 @@ if not exist "%PYTHON_BIN%" (
     if %errorlevel% equ 0 (
         set PYTHON_BIN=python
     ) else (
-        echo [ERROR] Python not found. Please ensure Python 3.12 is installed.
-        pause
-        exit /b 1
+        echo [INFO] Python not found. Opening frontend directly in your default browser...
+        start "" "%~dp0frontend\index.html"
+        exit /b 0
     )
 )
 
 echo [*] Using Python: %PYTHON_BIN%
-echo [*] Launching Flask REST API server...
+echo [*] Launching local server at http://127.0.0.1:5000...
 echo.
 
 start "" "http://127.0.0.1:5000"
-"%PYTHON_BIN%" backend\app.py
+"%PYTHON_BIN%" -m http.server 5000 --directory "%~dp0frontend"
 pause

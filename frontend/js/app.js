@@ -25,8 +25,8 @@ document.addEventListener("DOMContentLoaded", async () => {
   initGoogleAuth();
   initActiveMealDate();
 
-  // Check backend server status
-  await checkBackendStatus();
+  // Check Supabase cloud database status
+  await updateSupabaseStatusIndicator();
 
   // Load saved form data or run default calculation
   loadSavedFormData();
@@ -75,21 +75,118 @@ function updateThemeIcon() {
 }
 
 // -------------------------------------------------------------
-// Backend Status Indicator
+// Supabase Cloud Connection & Modal Handlers
 // -------------------------------------------------------------
-async function checkBackendStatus() {
-  const isHealthy = await Api.checkHealth();
-  const badge = document.getElementById("serverStatusBadge");
-  if (!badge) return;
+async function updateSupabaseStatusIndicator() {
+  const statusText = document.getElementById("supabaseStatusText");
+  const statusDot = document.getElementById("supabaseStatusDot");
+  const alertBox = document.getElementById("supabaseConnectionAlert");
+  const alertMsg = document.getElementById("supabaseAlertMessage");
+  const alertDot = document.getElementById("supabaseAlertDot");
 
-  if (isHealthy) {
-    badge.className = "inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800 dark:bg-emerald-950/70 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800";
-    badge.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-500 pulse-indicator"></span> REST API Connected`;
+  const isConfigured = window.SupabaseService && window.SupabaseService.isConfigured();
+
+  if (isConfigured) {
+    if (statusText) statusText.textContent = "Supabase Connected";
+    if (statusDot) statusDot.className = "w-2 h-2 rounded-full bg-emerald-500 animate-pulse";
+
+    if (alertBox) alertBox.className = "p-3 rounded-xl bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-200 dark:border-emerald-800 text-xs font-medium text-emerald-800 dark:text-emerald-300 flex items-center justify-between";
+    if (alertMsg) alertMsg.textContent = "Status: Supabase connected to project";
+    if (alertDot) alertDot.className = "w-2.5 h-2.5 rounded-full bg-emerald-500";
   } else {
-    badge.className = "inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-blue-100 text-blue-800 dark:bg-blue-950/70 dark:text-blue-300 border border-blue-300 dark:border-blue-800";
-    badge.innerHTML = `<span class="w-2 h-2 rounded-full bg-blue-500"></span> Client Engine Active`;
+    if (statusText) statusText.textContent = "Connect Supabase";
+    if (statusDot) statusDot.className = "w-2 h-2 rounded-full bg-amber-400";
+
+    if (alertBox) alertBox.className = "p-3 rounded-xl bg-slate-100 dark:bg-slate-800 text-xs font-medium text-slate-700 dark:text-slate-300 flex items-center justify-between";
+    if (alertMsg) alertMsg.textContent = "Status: Running in offline LocalStorage mode";
+    if (alertDot) alertDot.className = "w-2.5 h-2.5 rounded-full bg-slate-400";
   }
 }
+
+window.openSupabaseModal = function() {
+  const modal = document.getElementById("supabaseConfigModal");
+  if (!modal) return;
+  modal.classList.remove("hidden");
+
+  const urlInput = document.getElementById("supabaseUrlInput");
+  const keyInput = document.getElementById("supabaseKeyInput");
+  const sqlPre = document.getElementById("supabaseSqlPre");
+
+  if (urlInput && window.SupabaseService) urlInput.value = window.SupabaseService.getUrl();
+  if (keyInput && window.SupabaseService) keyInput.value = window.SupabaseService.getAnonKey();
+  if (sqlPre && typeof SUPABASE_SQL_SCHEMA !== "undefined") {
+    sqlPre.textContent = SUPABASE_SQL_SCHEMA;
+  }
+
+  updateSupabaseStatusIndicator();
+};
+
+window.closeSupabaseModal = function() {
+  const modal = document.getElementById("supabaseConfigModal");
+  if (modal) modal.classList.add("hidden");
+};
+
+window.handleSaveSupabaseConfig = async function() {
+  const urlInput = document.getElementById("supabaseUrlInput");
+  const keyInput = document.getElementById("supabaseKeyInput");
+  const alertMsg = document.getElementById("supabaseAlertMessage");
+  const alertDot = document.getElementById("supabaseAlertDot");
+
+  const url = urlInput ? urlInput.value.trim() : "";
+  const key = keyInput ? keyInput.value.trim() : "";
+
+  if (!url || !key) {
+    alert("Please enter both the Supabase Project URL and Anon API Key.");
+    return;
+  }
+
+  try {
+    if (alertMsg) alertMsg.textContent = "Testing connection to Supabase...";
+    window.SupabaseService.saveCredentials(url, key);
+    const test = await window.SupabaseService.testConnection();
+
+    if (test.success) {
+      if (alertMsg) alertMsg.textContent = "✓ Connected to Supabase successfully!";
+      if (alertDot) alertDot.className = "w-2.5 h-2.5 rounded-full bg-emerald-500";
+      updateSupabaseStatusIndicator();
+      setTimeout(() => {
+        closeSupabaseModal();
+        loadMeals();
+        loadHistory(currentHistoryPeriod);
+      }, 1200);
+    } else {
+      if (alertMsg) alertMsg.textContent = test.message;
+      if (alertDot) alertDot.className = "w-2.5 h-2.5 rounded-full bg-amber-500";
+      updateSupabaseStatusIndicator();
+    }
+  } catch (err) {
+    if (alertMsg) alertMsg.textContent = "Error: " + err.message;
+    if (alertDot) alertDot.className = "w-2.5 h-2.5 rounded-full bg-red-500";
+  }
+};
+
+window.handleClearSupabaseConfig = function() {
+  if (confirm("Disconnect Supabase and switch back to offline LocalStorage mode?")) {
+    window.SupabaseService.clearCredentials();
+    const urlInput = document.getElementById("supabaseUrlInput");
+    const keyInput = document.getElementById("supabaseKeyInput");
+    if (urlInput) urlInput.value = "";
+    if (keyInput) keyInput.value = "";
+    updateSupabaseStatusIndicator();
+  }
+};
+
+window.copySupabaseSqlScript = function() {
+  if (typeof SUPABASE_SQL_SCHEMA !== "undefined") {
+    navigator.clipboard.writeText(SUPABASE_SQL_SCHEMA).then(() => {
+      const btn = document.getElementById("copySqlBtn");
+      if (btn) {
+        btn.textContent = "✓ Copied!";
+        setTimeout(() => { btn.textContent = "Copy SQL"; }, 2000);
+      }
+    });
+  }
+};
 
 // -------------------------------------------------------------
 // Unit Conversion Toggle
@@ -2011,6 +2108,28 @@ function initGoogleAuth() {
     }
   }
 
+  // Initialize Supabase Auth session if configured
+  if (window.SupabaseService && window.SupabaseService.isConfigured()) {
+    window.SupabaseService.getCurrentUser().then(user => {
+      if (user) {
+        currentUser = user;
+        updateUserAuthUI();
+      }
+    });
+
+    window.SupabaseService.onAuthStateChange(async (event, session) => {
+      if (session && session.user) {
+        currentUser = await window.SupabaseService.getCurrentUser();
+        updateUserAuthUI();
+        loadMeals();
+        loadHistory(currentHistoryPeriod);
+      } else if (event === "SIGNED_OUT") {
+        currentUser = null;
+        updateUserAuthUI();
+      }
+    });
+  }
+
   // Initialize Google Identity Services if library loaded
   if (window.google && window.google.accounts && window.google.accounts.id) {
     window.google.accounts.id.initialize({
@@ -2093,7 +2212,14 @@ window.handleCustomGoogleSignIn = async function() {
   await handleDemoGoogleSignIn(name, email);
 };
 
-window.handleGoogleSignOut = function() {
+window.handleGoogleSignOut = async function() {
+  if (window.SupabaseService && window.SupabaseService.isConfigured()) {
+    try {
+      await window.SupabaseService.signOut();
+    } catch (e) {
+      console.warn("Supabase sign out error:", e);
+    }
+  }
   localStorage.removeItem("nutriglance_user");
   currentUser = null;
   updateUserAuthUI();
