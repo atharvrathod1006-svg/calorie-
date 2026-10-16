@@ -4,7 +4,7 @@ echo Pushing NutriGlance Calorie Tracker to GitHub...
 echo Repository: https://github.com/atharvrathod1006-svg/calorie-
 echo ========================================================
 cd /d "%~dp0"
-"C:\Program Files\Git\bin\git.exe" push -u origin main
+"C:\Program Files\Git\ucrt64\bin\git.exe" push -u origin main
 echo.
 if %ERRORLEVEL% EQU 0 (
     echo ========================================================
