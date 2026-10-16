@@ -356,18 +356,6 @@ const Api = {
     };
   },
 
-  async googleAuth(profile) {
-    const user = {
-      id: profile.sub || profile.id || "user_" + Math.random().toString(36).substr(2, 9),
-      email: profile.email || "alex.morgan@gmail.com",
-      name: profile.name || "Alex Morgan",
-      picture: profile.picture || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=120&auto=format&fit=crop&q=80",
-      provider: "google",
-      logged_in_at: new Date().toISOString()
-    };
-    localStorage.setItem("nutriglance_user", JSON.stringify(user));
-    return user;
-  },
 
   ensureLocalHistorySeeded() {
     const existing = localStorage.getItem("calorie_meals");
@@ -411,26 +399,9 @@ const Api = {
   calculateClientSide(payload) {
     const gender = (payload.gender || "male").toLowerCase();
     const age = parseInt(payload.age || 25);
-    const unit = (payload.unit_system || "metric").toLowerCase();
-    let weight = parseFloat(payload.weight || 70);
-    let height = parseFloat(payload.height || 175);
-    const heightInches = parseFloat(payload.height_inches || 0);
-
-    let weightKg = weight;
-    let heightCm = height;
-
-    if (unit === "imperial") {
-      weightKg = weight * 0.45359237;
-      heightCm = (height * 12 + heightInches) * 2.54;
-    }
-
-    weightKg = Math.round(weightKg * 10) / 10;
-    heightCm = Math.round(heightCm * 10) / 10;
-
-    let targetWeightKg = null;
-    if (payload.target_weight) {
-      targetWeightKg = unit === "imperial" ? parseFloat(payload.target_weight) * 0.45359237 : parseFloat(payload.target_weight);
-    }
+    const weightKg = Math.round(parseFloat(payload.weight || 70) * 10) / 10;
+    const heightCm = Math.round(parseFloat(payload.height || 175) * 10) / 10;
+    const targetWeightKg = payload.target_weight ? parseFloat(payload.target_weight) : null;
 
     // BMR
     let bmr = 0;
@@ -551,7 +522,7 @@ const Api = {
     else if (bmi >= 30) bmiCategory = "Obese";
 
     return {
-      inputs: { gender, age, weight_kg: weightKg, height_cm: heightCm, unit_system: unit, formula },
+      inputs: { gender, age, weight_kg: weightKg, height_cm: heightCm, unit_system: "metric", formula },
       bmi: { score: bmi, category: bmiCategory },
       bmr,
       tdee,

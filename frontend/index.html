@@ -40,9 +40,6 @@
   <!-- Supabase JS Client v2 -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-  <!-- Google Identity Services (GIS) -->
-  <script src="https://accounts.google.com/gsi/client" async defer></script>
-
   <!-- jsPDF & html2canvas for 1-Click PDF Report Generation -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
@@ -159,64 +156,6 @@
           </div>
         </div>
 
-        <!-- Google Sign-In Button (Logged Out State) -->
-        <button id="googleSignInBtn" onclick="openGoogleLoginModal()" class="flex items-center gap-2 px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-750 text-slate-700 dark:text-slate-200 text-xs font-semibold shadow-sm transition-all" title="Sign in with your Google Account">
-          <svg class="w-4 h-4 shrink-0" viewBox="0 0 24 24">
-            <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-            <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-            <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
-            <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
-          </svg>
-          <span class="hidden sm:inline">Sign in with Google</span>
-          <span class="sm:hidden">Google</span>
-        </button>
-
-        <!-- Google User Profile (Logged In State) -->
-        <div id="userProfileWidget" class="hidden relative">
-          <button onclick="toggleUserDropdown()" class="flex items-center gap-2 p-1 sm:pr-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 text-xs transition-all">
-            <img id="userAvatarImg" src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=80&auto=format&fit=crop&q=80" alt="Avatar" class="w-6 h-6 rounded-lg object-cover ring-1 ring-blue-500">
-            <span id="userNameSpan" class="hidden sm:inline font-bold text-slate-800 dark:text-slate-200 max-w-[100px] truncate">Alex</span>
-            <svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
-          </button>
-
-          <!-- Dropdown menu -->
-          <div id="userDropdownMenu" class="hidden absolute right-0 mt-2 w-60 rounded-2xl bg-white dark:bg-slate-850 border border-slate-200 dark:border-slate-700 shadow-xl py-2 z-50 text-xs">
-            <div class="px-3.5 py-2 border-b border-slate-100 dark:border-slate-800">
-              <p class="font-bold text-slate-900 dark:text-white" id="userDropdownName">Alex Morgan</p>
-              <p class="text-[11px] text-slate-500 truncate" id="userDropdownEmail">alex.morgan@gmail.com</p>
-              <span class="inline-flex items-center gap-1 mt-1 text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold">
-                <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Google Connected
-              </span>
-            </div>
-
-            <div class="px-3.5 py-1.5 text-[10px] uppercase tracking-wider font-bold text-slate-400 dark:text-slate-500">
-              Calorie History
-            </div>
-
-            <button type="button" onclick="navGoToHistory('yesterday')" class="w-full text-left px-3.5 py-1.5 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 flex items-center justify-between">
-              <span class="flex items-center gap-2"><span>⏱️</span><span>Yesterday's Log</span></span>
-              <span class="text-[10px] text-slate-400">1 day</span>
-            </button>
-            <button type="button" onclick="navGoToHistory('last_week')" class="w-full text-left px-3.5 py-1.5 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 flex items-center justify-between">
-              <span class="flex items-center gap-2"><span>📊</span><span>Last Week</span></span>
-              <span class="text-[10px] text-blue-600 dark:text-blue-400 font-semibold">7 days</span>
-            </button>
-            <button type="button" onclick="navGoToHistory('last_month')" class="w-full text-left px-3.5 py-1.5 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 flex items-center justify-between">
-              <span class="flex items-center gap-2"><span>🗓️</span><span>Last Month</span></span>
-              <span class="text-[10px] text-slate-400">30 days</span>
-            </button>
-            <button type="button" onclick="navGeneratePdf()" class="w-full text-left px-3.5 py-1.5 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 font-semibold flex items-center gap-2">
-              <span>📄</span><span>Generate PDF Report</span>
-            </button>
-
-            <div class="border-t border-slate-100 dark:border-slate-800 mt-1 pt-1">
-              <button type="button" onclick="handleGoogleSignOut()" class="w-full text-left px-3.5 py-2 hover:bg-red-50 dark:hover:bg-red-950/40 text-red-600 dark:text-red-400 font-semibold">
-                Sign Out
-              </button>
-            </div>
-          </div>
-        </div>
-
         <!-- Supabase Cloud Connection & Settings Button -->
         <button id="supabaseConfigBtn" onclick="openSupabaseModal()" class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border border-emerald-200 dark:border-emerald-800/80 bg-emerald-50/90 dark:bg-emerald-950/50 hover:bg-emerald-100 dark:hover:bg-emerald-900/60 text-emerald-700 dark:text-emerald-300 text-xs font-bold shadow-sm transition-all" title="Connect to your Supabase Project">
           <svg class="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" viewBox="0 0 24 24" fill="currentColor">
@@ -225,16 +164,6 @@
           <span id="supabaseStatusText">Supabase</span>
           <span id="supabaseStatusDot" class="w-2 h-2 rounded-full bg-slate-400"></span>
         </button>
-
-        <!-- Unit Switcher -->
-        <div class="flex items-center bg-slate-100 dark:bg-slate-800 p-1 rounded-xl text-xs font-semibold">
-          <button id="unitMetricBtn" class="px-2 sm:px-2.5 py-1 rounded-lg bg-blue-600 text-white shadow-sm transition-all" data-current-unit="metric">
-            Metric
-          </button>
-          <button id="unitImperialBtn" class="px-2 sm:px-2.5 py-1 rounded-lg text-slate-600 dark:text-slate-300 hover:text-slate-900 transition-all">
-            Imperial
-          </button>
-        </div>
 
         <!-- Print Summary Button -->
         <button id="printReportBtn" class="p-2 rounded-xl text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 transition-all" title="Print or Save PDF Summary">
@@ -371,26 +300,12 @@
               </div>
             </div>
 
-            <!-- Height (Metric vs Imperial dynamic) -->
+            <!-- Height (cm) -->
             <div>
-              <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Height</label>
-              
-              <!-- Metric height -->
+              <label for="heightCmInput" class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Height</label>
               <div id="metricHeightContainer" class="relative">
                 <input type="number" id="heightCmInput" value="175" class="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none">
                 <span class="absolute right-3 top-2.5 text-xs text-slate-400">cm</span>
-              </div>
-
-              <!-- Imperial height -->
-              <div id="imperialHeightContainer" class="hidden grid grid-cols-2 gap-2">
-                <div class="relative">
-                  <input type="number" id="heightFtInput" value="5" min="1" max="8" class="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none">
-                  <span class="absolute right-3 top-2.5 text-xs text-slate-400">ft</span>
-                </div>
-                <div class="relative">
-                  <input type="number" id="heightInInput" value="9" min="0" max="11" class="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none">
-                  <span class="absolute right-3 top-2.5 text-xs text-slate-400">in</span>
-                </div>
               </div>
             </div>
 
@@ -1276,83 +1191,7 @@
     </div>
   </div>
 
-  <!-- ============================================================ -->
-  <!-- 🔐 Google Sign-In & Authentication Modal                     -->
-  <!-- ============================================================ -->
-  <div id="googleLoginModal" class="hidden fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
-    <div class="bg-white dark:bg-slate-900 rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-200 dark:border-slate-800 space-y-5 text-center relative">
-      <button type="button" onclick="closeGoogleLoginModal()" class="absolute right-4 top-4 text-slate-400 hover:text-slate-600 dark:hover:text-white text-lg font-bold">
-        ✕
-      </button>
 
-      <!-- Google Branding Header -->
-      <div class="w-14 h-14 rounded-2xl bg-slate-50 dark:bg-slate-800 flex items-center justify-center mx-auto shadow-inner border border-slate-100 dark:border-slate-700">
-        <svg class="w-8 h-8" viewBox="0 0 24 24">
-          <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-          <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-          <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
-          <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
-        </svg>
-      </div>
-
-      <div>
-        <h3 class="text-lg font-bold text-slate-900 dark:text-white">Sign in to NutriGlance</h3>
-        <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">
-          Sync your calorie intake, track multi-week trends, and export verified PDF reports.
-        </p>
-      </div>
-
-      <!-- Real Google Identity Services Container -->
-      <div id="googleIdentityServicesContainer" class="flex justify-center">
-        <!-- Rendered by Google GSI if online -->
-      </div>
-
-      <!-- One-Click Instant Google Demo Login -->
-      <div class="space-y-2">
-        <button type="button" onclick="handleDemoGoogleSignIn('Alex Morgan', 'alex.morgan@gmail.com')" class="w-full flex items-center justify-center gap-3 py-2.5 px-4 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-750 text-slate-800 dark:text-white font-semibold text-xs shadow-sm transition-all">
-          <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=60&auto=format&fit=crop&q=80" alt="Alex" class="w-5 h-5 rounded-full object-cover">
-          <span>Continue as Alex Morgan (Google Demo)</span>
-        </button>
-
-        <button type="button" onclick="handleDemoGoogleSignIn('Sam Taylor', 'sam.taylor@gmail.com')" class="w-full flex items-center justify-center gap-3 py-2 px-4 rounded-xl border border-slate-200 dark:border-slate-750 bg-slate-50 dark:bg-slate-850 hover:bg-slate-100 text-slate-700 dark:text-slate-300 font-medium text-xs transition-all">
-          <img src="https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=60&auto=format&fit=crop&q=80" alt="Sam" class="w-5 h-5 rounded-full object-cover">
-          <span>Continue as Sam Taylor (Google Demo)</span>
-        </button>
-      </div>
-
-      <!-- Custom Google Account Form -->
-      <details class="text-left">
-        <summary class="text-[11px] text-blue-600 dark:text-blue-400 cursor-pointer text-center font-medium hover:underline">
-          Or sign in with custom Google details
-        </summary>
-        <div class="mt-3 space-y-2 p-3 bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700">
-          <div>
-            <label class="block text-[10px] font-semibold text-slate-600 dark:text-slate-400 mb-0.5">Your Name</label>
-            <input type="text" id="customLoginName" placeholder="e.g. John Doe" class="w-full px-2.5 py-1.5 text-xs bg-white dark:bg-slate-700 rounded-lg border border-slate-200 dark:border-slate-600 outline-none">
-          </div>
-          <div>
-            <label class="block text-[10px] font-semibold text-slate-600 dark:text-slate-400 mb-0.5">Google Email</label>
-            <input type="email" id="customLoginEmail" placeholder="e.g. john.doe@gmail.com" class="w-full px-2.5 py-1.5 text-xs bg-white dark:bg-slate-700 rounded-lg border border-slate-200 dark:border-slate-600 outline-none">
-          </div>
-          <button type="button" onclick="handleCustomGoogleSignIn()" class="w-full py-1.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg text-xs transition-all">
-            Sign In with Google
-          </button>
-        </div>
-      </details>
-
-      <!-- Direct History Link in Modal -->
-      <div class="pt-2 border-t border-slate-100 dark:border-slate-800 flex items-center justify-center">
-        <button type="button" onclick="closeGoogleLoginModal(); navGoToHistory('yesterday')" class="text-xs text-blue-600 dark:text-blue-400 hover:underline font-semibold inline-flex items-center gap-1.5 py-1 px-3 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-950/40 transition-colors">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-          <span>View Calorie History without signing in →</span>
-        </button>
-      </div>
-
-      <p class="text-[10px] text-slate-400">
-        By connecting, your calorie logs and custom food items will be associated with your account.
-      </p>
-    </div>
-  </div>
 
   <!-- ============================================================ -->
   <!-- ⚡ Supabase Configuration & Connection Modal                 -->

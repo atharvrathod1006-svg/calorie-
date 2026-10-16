@@ -136,22 +136,7 @@ const SupabaseService = {
     }
   },
 
-  // -------------------------------------------------------------
-  // Authentication via Supabase
-  // -------------------------------------------------------------
-  async signInWithGoogle() {
-    if (!this.client) {
-      throw new Error("Please configure your Supabase URL & Anon Key first.");
-    }
-    const { data, error } = await this.client.auth.signInWithOAuth({
-      provider: "google",
-      options: {
-        redirectTo: window.location.origin + window.location.pathname
-      }
-    });
-    if (error) throw error;
-    return data;
-  },
+
 
   async signOut() {
     if (this.client) {
@@ -170,7 +155,7 @@ const SupabaseService = {
           email: session.user.email,
           name: session.user.user_metadata?.full_name || session.user.email?.split("@")[0] || "User",
           picture: session.user.user_metadata?.avatar_url || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=80&auto=format&fit=crop&q=80",
-          provider: "supabase_google"
+          provider: "supabase"
         };
       }
     } catch (e) {

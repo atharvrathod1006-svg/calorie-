@@ -16,13 +16,11 @@ let currentUser = null;
 // DOM Elements
 document.addEventListener("DOMContentLoaded", async () => {
   initTheme();
-  initUnitToggle();
   initGoalSelection();
   initFormulaToggle();
   initCustomMacroSliders();
   initEventListeners();
   initFoodSearch();
-  initGoogleAuth();
   initActiveMealDate();
 
   // Check Supabase cloud database status
@@ -188,79 +186,7 @@ window.copySupabaseSqlScript = function() {
   }
 };
 
-// -------------------------------------------------------------
-// Unit Conversion Toggle
-// -------------------------------------------------------------
-function initUnitToggle() {
-  const metricBtn = document.getElementById("unitMetricBtn");
-  const imperialBtn = document.getElementById("unitImperialBtn");
-  const metricHeight = document.getElementById("metricHeightContainer");
-  const imperialHeight = document.getElementById("imperialHeightContainer");
-  const weightLabel = document.getElementById("weightUnitLabel");
-  const targetWeightLabel = document.getElementById("targetWeightUnitLabel");
 
-  const weightInput = document.getElementById("weightInput");
-  const targetWeightInput = document.getElementById("targetWeightInput");
-  const heightCmInput = document.getElementById("heightCmInput");
-  const heightFtInput = document.getElementById("heightFtInput");
-  const heightInInput = document.getElementById("heightInInput");
-
-  function setUnit(unit) {
-    const isImperial = unit === "imperial";
-
-    // Update buttons UI
-    metricBtn.classList.toggle("bg-blue-600", !isImperial);
-    metricBtn.classList.toggle("text-white", !isImperial);
-    metricBtn.classList.toggle("text-slate-600", isImperial);
-    metricBtn.classList.toggle("dark:text-slate-300", isImperial);
-
-    imperialBtn.classList.toggle("bg-blue-600", isImperial);
-    imperialBtn.classList.toggle("text-white", isImperial);
-    imperialBtn.classList.toggle("text-slate-600", !isImperial);
-    imperialBtn.classList.toggle("dark:text-slate-300", !isImperial);
-
-    metricHeight.classList.toggle("hidden", isImperial);
-    imperialHeight.classList.toggle("hidden", !isImperial);
-
-    weightLabel.textContent = isImperial ? "lbs" : "kg";
-    if (targetWeightLabel) targetWeightLabel.textContent = isImperial ? "lbs" : "kg";
-
-    // Value conversion
-    if (isImperial && !metricBtn.dataset.currentUnit || metricBtn.dataset.currentUnit === "metric") {
-      // Metric -> Imperial
-      if (weightInput.value) {
-        weightInput.value = Math.round(parseFloat(weightInput.value) * 2.20462);
-      }
-      if (targetWeightInput && targetWeightInput.value) {
-        targetWeightInput.value = Math.round(parseFloat(targetWeightInput.value) * 2.20462);
-      }
-      if (heightCmInput.value) {
-        const totalInches = parseFloat(heightCmInput.value) / 2.54;
-        heightFtInput.value = Math.floor(totalInches / 12);
-        heightInInput.value = Math.round(totalInches % 12);
-      }
-    } else if (!isImperial && metricBtn.dataset.currentUnit === "imperial") {
-      // Imperial -> Metric
-      if (weightInput.value) {
-        weightInput.value = Math.round(parseFloat(weightInput.value) / 2.20462);
-      }
-      if (targetWeightInput && targetWeightInput.value) {
-        targetWeightInput.value = Math.round(parseFloat(targetWeightInput.value) / 2.20462);
-      }
-      const feet = parseFloat(heightFtInput.value || 0);
-      const inches = parseFloat(heightInInput.value || 0);
-      if (feet || inches) {
-        heightCmInput.value = Math.round((feet * 12 + inches) * 2.54);
-      }
-    }
-
-    metricBtn.dataset.currentUnit = unit;
-    calculateAndRender();
-  }
-
-  metricBtn.addEventListener("click", () => setUnit("metric"));
-  imperialBtn.addEventListener("click", () => setUnit("imperial"));
-}
 
 // -------------------------------------------------------------
 // Goal Selection & Custom Deficit
@@ -470,13 +396,10 @@ function calculateAndRender(forceAnimate = false) {
 function collectFormData() {
   const gender = document.querySelector("input[name='gender']:checked")?.value || "male";
   const age = parseInt(document.getElementById("ageInput")?.value || 25);
-  const metricBtn = document.getElementById("unitMetricBtn");
-  const unit_system = metricBtn?.dataset.currentUnit || "metric";
+  const unit_system = "metric";
 
   const weight = parseFloat(document.getElementById("weightInput")?.value || 70);
   const heightCm = parseFloat(document.getElementById("heightCmInput")?.value || 175);
-  const heightFt = parseFloat(document.getElementById("heightFtInput")?.value || 5);
-  const heightIn = parseFloat(document.getElementById("heightInInput")?.value || 9);
   const targetWeight = document.getElementById("targetWeightInput")?.value || null;
 
   const activity_level = document.getElementById("activitySelect")?.value || "moderate";
@@ -503,8 +426,8 @@ function collectFormData() {
     age,
     unit_system,
     weight,
-    height: unit_system === "imperial" ? heightFt : heightCm,
-    height_inches: unit_system === "imperial" ? heightIn : 0,
+    height: heightCm,
+    height_inches: 0,
     target_weight: targetWeight,
     activity_level,
     formula,
@@ -1067,11 +990,14 @@ function loadSavedFormData() {
       if (radio) radio.checked = true;
     }
     if (data.age) document.getElementById("ageInput").value = data.age;
-    if (data.weight) document.getElementById("weightInput").value = data.weight;
+    if (data.weight) {
+      document.getElementById("weightInput").value = data.unit_system === "imperial" ? Math.round(parseFloat(data.weight) / 2.20462) : data.weight;
+    }
     if (data.height) {
       if (data.unit_system === "imperial") {
-        document.getElementById("heightFtInput").value = data.height;
-        document.getElementById("heightInInput").value = data.height_inches || 0;
+        const ft = parseFloat(data.height || 0);
+        const inches = parseFloat(data.height_inches || 0);
+        document.getElementById("heightCmInput").value = Math.round((ft * 12 + inches) * 2.54);
       } else {
         document.getElementById("heightCmInput").value = data.height;
       }
@@ -1142,14 +1068,11 @@ window.handleCalculateClick = function(event) {
   const weightInput = document.getElementById("weightInput");
   const ageInput = document.getElementById("ageInput");
   const heightCmInput = document.getElementById("heightCmInput");
-  const heightFtInput = document.getElementById("heightFtInput");
-  const metricBtn = document.getElementById("unitMetricBtn");
-  const isImperial = metricBtn?.dataset.currentUnit === "imperial";
 
   const weight = parseFloat(weightInput?.value);
   if (isNaN(weight) || weight <= 0) {
     if (errBanner && errMsg) {
-      errMsg.textContent = "Please enter a valid weight (e.g. 70 kg or 154 lbs).";
+      errMsg.textContent = "Please enter a valid weight in kg (e.g. 70 kg).";
       errBanner.classList.remove("hidden");
     }
     weightInput?.focus();
@@ -1166,26 +1089,14 @@ window.handleCalculateClick = function(event) {
     return;
   }
 
-  if (isImperial) {
-    const ft = parseFloat(heightFtInput?.value);
-    if (isNaN(ft) || ft <= 0) {
-      if (errBanner && errMsg) {
-        errMsg.textContent = "Please enter your height in feet.";
-        errBanner.classList.remove("hidden");
-      }
-      heightFtInput?.focus();
-      return;
+  const cm = parseFloat(heightCmInput?.value);
+  if (isNaN(cm) || cm < 50) {
+    if (errBanner && errMsg) {
+      errMsg.textContent = "Please enter a valid height in centimeters.";
+      errBanner.classList.remove("hidden");
     }
-  } else {
-    const cm = parseFloat(heightCmInput?.value);
-    if (isNaN(cm) || cm < 50) {
-      if (errBanner && errMsg) {
-        errMsg.textContent = "Please enter a valid height in centimeters.";
-        errBanner.classList.remove("hidden");
-      }
-      heightCmInput?.focus();
-      return;
-    }
+    heightCmInput?.focus();
+    return;
   }
 
   // Execute full calculation with force animation
@@ -1929,7 +1840,7 @@ window.generatePdfReport = function() {
           <strong class="text-slate-900 font-bold">${userName}</strong>
         </div>
         <div>
-          <span class="text-slate-400 text-[10px] block">GOOGLE ACCOUNT</span>
+          <span class="text-slate-400 text-[10px] block">CLIENT EMAIL</span>
           <span class="text-slate-700 font-medium truncate block">${userEmail}</span>
         </div>
         <div>
@@ -2095,174 +2006,7 @@ window.printPeriodReportDoc = function() {
 };
 
 // -------------------------------------------------------------
-// Google Sign-In & Authentication Management
-// -------------------------------------------------------------
-function initGoogleAuth() {
-  const savedUser = localStorage.getItem("nutriglance_user");
-  if (savedUser) {
-    try {
-      currentUser = JSON.parse(savedUser);
-      updateUserAuthUI();
-    } catch (e) {
-      console.warn("Could not parse saved user:", e);
-    }
-  }
-
-  // Initialize Supabase Auth session if configured
-  if (window.SupabaseService && window.SupabaseService.isConfigured()) {
-    window.SupabaseService.getCurrentUser().then(user => {
-      if (user) {
-        currentUser = user;
-        updateUserAuthUI();
-      }
-    });
-
-    window.SupabaseService.onAuthStateChange(async (event, session) => {
-      if (session && session.user) {
-        currentUser = await window.SupabaseService.getCurrentUser();
-        updateUserAuthUI();
-        loadMeals();
-        loadHistory(currentHistoryPeriod);
-      } else if (event === "SIGNED_OUT") {
-        currentUser = null;
-        updateUserAuthUI();
-      }
-    });
-  }
-
-  // Initialize Google Identity Services if library loaded
-  if (window.google && window.google.accounts && window.google.accounts.id) {
-    window.google.accounts.id.initialize({
-      client_id: "demo-client-id.apps.googleusercontent.com",
-      callback: handleGoogleCredentialResponse,
-      auto_select: false
-    });
-
-    const container = document.getElementById("googleIdentityServicesContainer");
-    if (container) {
-      window.google.accounts.id.renderButton(container, {
-        theme: "outline",
-        size: "large",
-        shape: "pill",
-        text: "continue_with"
-      });
-    }
-  }
-}
-
-function handleGoogleCredentialResponse(response) {
-  // Demo decoding JWT payload
-  try {
-    const base64Url = response.credential.split('.')[1];
-    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-    const jsonPayload = decodeURIComponent(atob(base64).split('').map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)).join(''));
-    const profile = JSON.parse(jsonPayload);
-    handleDemoGoogleSignIn(profile.name, profile.email, profile.picture);
-  } catch (e) {
-    handleDemoGoogleSignIn("Google User", "user@gmail.com");
-  }
-}
-
-window.openGoogleLoginModal = function() {
-  const modal = document.getElementById("googleLoginModal");
-  if (modal) modal.classList.remove("hidden");
-};
-
-window.closeGoogleLoginModal = function() {
-  const modal = document.getElementById("googleLoginModal");
-  if (modal) modal.classList.add("hidden");
-};
-
-window.handleDemoGoogleSignIn = async function(name = "Alex Morgan", email = "alex.morgan@gmail.com", picture = "") {
-  const profile = {
-    name: name,
-    email: email,
-    picture: picture || (name.includes("Sam")
-      ? "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=100&auto=format&fit=crop&q=80"
-      : "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80"),
-    sub: "google_" + Math.random().toString(36).substr(2, 9)
-  };
-
-  const user = await Api.googleAuth(profile);
-  currentUser = user;
-  updateUserAuthUI();
-  closeGoogleLoginModal();
-
-  // Toast confirmation
-  const toast = document.getElementById("calcSuccessToast");
-  const toastMsg = document.getElementById("calcToastMessage");
-  if (toast && toastMsg) {
-    toastMsg.textContent = `✓ Signed in with Google as ${name}!`;
-    toast.className = "p-3 rounded-xl bg-blue-600 text-white text-xs sm:text-sm font-bold shadow-md shadow-blue-500/20 flex items-center justify-between transition-all";
-    toast.classList.remove("hidden");
-    setTimeout(() => toast.classList.add("hidden"), 3000);
-  }
-};
-
-window.handleCustomGoogleSignIn = async function() {
-  const nameInput = document.getElementById("customLoginName");
-  const emailInput = document.getElementById("customLoginEmail");
-  const name = nameInput ? nameInput.value.trim() : "";
-  const email = emailInput ? emailInput.value.trim() : "";
-
-  if (!name || !email) {
-    alert("Please provide both name and email.");
-    return;
-  }
-  await handleDemoGoogleSignIn(name, email);
-};
-
-window.handleGoogleSignOut = async function() {
-  if (window.SupabaseService && window.SupabaseService.isConfigured()) {
-    try {
-      await window.SupabaseService.signOut();
-    } catch (e) {
-      console.warn("Supabase sign out error:", e);
-    }
-  }
-  localStorage.removeItem("nutriglance_user");
-  currentUser = null;
-  updateUserAuthUI();
-  toggleUserDropdown();
-
-  const toast = document.getElementById("calcSuccessToast");
-  const toastMsg = document.getElementById("calcToastMessage");
-  if (toast && toastMsg) {
-    toastMsg.textContent = "Signed out of Google account.";
-    toast.className = "p-3 rounded-xl bg-slate-700 text-white text-xs sm:text-sm font-bold shadow-md flex items-center justify-between transition-all";
-    toast.classList.remove("hidden");
-    setTimeout(() => toast.classList.add("hidden"), 2500);
-  }
-};
-
-function updateUserAuthUI() {
-  const signInBtn = document.getElementById("googleSignInBtn");
-  const widget = document.getElementById("userProfileWidget");
-  const avatarImg = document.getElementById("userAvatarImg");
-  const nameSpan = document.getElementById("userNameSpan");
-  const dropName = document.getElementById("userDropdownName");
-  const dropEmail = document.getElementById("userDropdownEmail");
-
-  if (currentUser) {
-    if (signInBtn) signInBtn.classList.add("hidden");
-    if (widget) widget.classList.remove("hidden");
-    if (avatarImg) avatarImg.src = currentUser.picture;
-    if (nameSpan) nameSpan.textContent = currentUser.name.split(" ")[0];
-    if (dropName) dropName.textContent = currentUser.name;
-    if (dropEmail) dropEmail.textContent = currentUser.email;
-  } else {
-    if (signInBtn) signInBtn.classList.remove("hidden");
-    if (widget) widget.classList.add("hidden");
-  }
-}
-
-window.toggleUserDropdown = function() {
-  const menu = document.getElementById("userDropdownMenu");
-  if (menu) menu.classList.toggle("hidden");
-};
-
-// -------------------------------------------------------------
-// Login Bar History Dropdown & Quick Actions
+// History Dropdown & Quick Navigation Actions
 // -------------------------------------------------------------
 window.toggleNavHistoryDropdown = function(event) {
   if (event) {
@@ -2279,8 +2023,6 @@ window.closeNavHistoryDropdown = function() {
 
 window.navGoToHistory = function(period) {
   closeNavHistoryDropdown();
-  const userMenu = document.getElementById("userDropdownMenu");
-  if (userMenu) userMenu.classList.add("hidden");
 
   // Select period
   if (period && typeof selectHistoryPeriod === "function") {
@@ -2296,8 +2038,6 @@ window.navGoToHistory = function(period) {
 
 window.navGeneratePdf = function() {
   closeNavHistoryDropdown();
-  const userMenu = document.getElementById("userDropdownMenu");
-  if (userMenu) userMenu.classList.add("hidden");
 
   if (typeof openPdfReportModal === "function") {
     openPdfReportModal();
@@ -2313,14 +2053,7 @@ document.addEventListener("click", function(event) {
       navDropdown.classList.add("hidden");
     }
   }
-
-  const userDropdown = document.getElementById("userDropdownMenu");
-  const userWidget = document.getElementById("userProfileWidget");
-  if (userDropdown && !userDropdown.classList.contains("hidden")) {
-    if (userWidget && !userWidget.contains(event.target)) {
-      userDropdown.classList.add("hidden");
-    }
-  }
 });
+
 
 
