@@ -2102,20 +2102,29 @@ window.navGeneratePdf = function() {
 let currentAuthTab = "signin";
 
 async function initSupabaseAuth() {
+  // First check if there is a saved user in localStorage
+  try {
+    const saved = localStorage.getItem("nutriglance_user");
+    if (saved) {
+      currentUser = JSON.parse(saved);
+    }
+  } catch (e) {}
+
   const service = window.SupabaseService || (typeof SupabaseService !== "undefined" ? SupabaseService : null);
   if (!service || !service.isConfigured()) {
     updateUserAuthUI();
     return;
   }
 
-  // Check existing session
+  // Check Supabase session
   try {
     const user = await service.getCurrentUser();
     if (user) {
       currentUser = user;
+      localStorage.setItem("nutriglance_user", JSON.stringify(user));
     }
   } catch (e) {
-    console.warn("Could not check current user:", e);
+    console.warn("Could not check current Supabase user:", e);
   }
 
   updateUserAuthUI();
@@ -2124,6 +2133,9 @@ async function initSupabaseAuth() {
   service.onAuthStateChange(async (event, session) => {
     if (session && session.user) {
       currentUser = await service.getCurrentUser();
+      if (currentUser) {
+        localStorage.setItem("nutriglance_user", JSON.stringify(currentUser));
+      }
       updateUserAuthUI();
       await loadMeals();
       if (typeof loadHistory === "function" && currentHistoryPeriod) {
@@ -2131,6 +2143,7 @@ async function initSupabaseAuth() {
       }
     } else if (event === "SIGNED_OUT") {
       currentUser = null;
+      localStorage.removeItem("nutriglance_user");
       updateUserAuthUI();
       await loadMeals();
       if (typeof loadHistory === "function" && currentHistoryPeriod) {
@@ -2152,12 +2165,12 @@ function updateUserAuthUI() {
     if (signInBtn) signInBtn.classList.add("hidden");
     if (userWidget) userWidget.classList.remove("hidden");
 
-    const displayName = currentUser.name || currentUser.email.split("@")[0] || "User";
+    const displayName = currentUser.name || (currentUser.email ? currentUser.email.split("@")[0] : "User");
     const initial = (displayName.charAt(0) || "U").toUpperCase();
 
     if (userNameSpan) userNameSpan.textContent = displayName.split(" ")[0];
     if (userDropdownName) userDropdownName.textContent = displayName;
-    if (userDropdownEmail) userDropdownEmail.textContent = currentUser.email;
+    if (userDropdownEmail) userDropdownEmail.textContent = currentUser.email || "";
     if (userAvatarText) userAvatarText.textContent = initial;
   } else {
     if (signInBtn) signInBtn.classList.remove("hidden");
@@ -2178,8 +2191,8 @@ window.openAuthModal = function(tab = "signin") {
 
   if (!service || !service.isConfigured()) {
     if (alertBox && alertMsg) {
-      alertMsg.innerHTML = `<span>⚠️ Supabase Cloud is not connected yet.</span> <button type="button" onclick="closeAuthModal(); openSupabaseModal();" class="underline font-bold text-amber-900 dark:text-amber-200 ml-1">Connect Supabase →</button>`;
-      alertBox.className = "p-3 rounded-xl text-xs font-medium bg-amber-50 dark:bg-amber-950/50 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-800 flex items-center justify-between";
+      alertMsg.innerHTML = `<span class="flex items-center gap-1.5"><span>💡</span><span>Local mode active. <button type="button" onclick="closeAuthModal(); openSupabaseModal();" class="underline font-bold text-blue-600 dark:text-blue-400 hover:text-blue-700 ml-1">Connect Supabase for cloud sync →</button></span></span>`;
+      alertBox.className = "p-3 rounded-xl text-xs font-medium bg-blue-50 dark:bg-blue-950/50 text-blue-800 dark:text-blue-300 border border-blue-200 dark:border-blue-800 flex items-center justify-between";
       alertBox.classList.remove("hidden");
     }
   }
@@ -2231,24 +2244,9 @@ window.handleEmailAuthSubmit = async function(event) {
 
   const alertBox = document.getElementById("authAlertBanner");
   const alertMsg = document.getElementById("authAlertMessage");
-  const service = window.SupabaseService || (typeof SupabaseService !== "undefined" ? SupabaseService : null);
-
-  if (!service || !service.isConfigured()) {
-    if (alertBox && alertMsg) {
-      alertMsg.innerHTML = `<span>Please connect Supabase first.</span> <button type="button" onclick="closeAuthModal(); openSupabaseModal();" class="underline font-bold text-amber-900 dark:text-amber-200 ml-1">Connect now →</button>`;
-      alertBox.className = "p-3 rounded-xl text-xs font-semibold bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-800 flex items-center justify-between";
-      alertBox.classList.remove("hidden");
-    } else {
-      alert("Please connect to your Supabase project first.");
-    }
-    return;
-  }
-
   const emailInput = document.getElementById("authEmailInput");
   const passInput = document.getElementById("authPasswordInput");
   const nameInput = document.getElementById("authFullNameInput");
-  const alertBox = document.getElementById("authAlertBanner");
-  const alertMsg = document.getElementById("authAlertMessage");
   const submitBtn = document.getElementById("authSubmitBtn");
   const submitText = document.getElementById("authSubmitBtnText");
 
@@ -2265,48 +2263,90 @@ window.handleEmailAuthSubmit = async function(event) {
     return;
   }
 
+  if (password.length < 6) {
+    if (alertBox && alertMsg) {
+      alertMsg.textContent = "Password must be at least 6 characters.";
+      alertBox.className = "p-3 rounded-xl text-xs font-semibold bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-800";
+      alertBox.classList.remove("hidden");
+    }
+    return;
+  }
+
   if (submitBtn) submitBtn.disabled = true;
   if (submitText) submitText.textContent = currentAuthTab === "signin" ? "Signing In..." : "Creating Account...";
 
+  const service = window.SupabaseService || (typeof SupabaseService !== "undefined" ? SupabaseService : null);
+  const isCloud = service && service.isConfigured();
+
   try {
-    if (currentAuthTab === "signin") {
-      const res = await service.signInWithEmail(email, password);
-      if (res && res.user) {
-        if (alertBox && alertMsg) {
-          alertMsg.textContent = "✓ Signed in successfully!";
-          alertBox.className = "p-3 rounded-xl text-xs font-semibold bg-emerald-50 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800";
-          alertBox.classList.remove("hidden");
-        }
-        currentUser = await service.getCurrentUser();
-        updateUserAuthUI();
-        setTimeout(() => {
-          closeAuthModal();
-        }, 1000);
-      }
-    } else {
-      const res = await service.signUpWithEmail(email, password, fullName);
-      if (res) {
-        if (alertBox && alertMsg) {
-          if (res.session) {
-            alertMsg.textContent = "✓ Account created & signed in successfully!";
+    if (isCloud) {
+      // ⚡ Cloud Authentication with Supabase
+      if (currentAuthTab === "signin") {
+        const res = await service.signInWithEmail(email, password);
+        if (res && res.user) {
+          if (alertBox && alertMsg) {
+            alertMsg.textContent = "✓ Signed in successfully via Supabase Cloud!";
             alertBox.className = "p-3 rounded-xl text-xs font-semibold bg-emerald-50 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800";
             alertBox.classList.remove("hidden");
-            currentUser = await service.getCurrentUser();
-            updateUserAuthUI();
-            setTimeout(() => {
-              closeAuthModal();
-            }, 1200);
-          } else {
-            // Email confirmation is required by Supabase settings
-            alertMsg.textContent = "✓ Account created! Please check your email to confirm your account, then sign in.";
-            alertBox.className = "p-3 rounded-xl text-xs font-semibold bg-blue-50 dark:bg-blue-950/40 text-blue-800 dark:text-blue-300 border border-blue-200 dark:border-blue-800";
-            alertBox.classList.remove("hidden");
-            setTimeout(() => {
-              switchAuthTab("signin");
-            }, 3000);
+          }
+          currentUser = await service.getCurrentUser();
+          if (currentUser) {
+            localStorage.setItem("nutriglance_user", JSON.stringify(currentUser));
+          }
+          updateUserAuthUI();
+          setTimeout(() => {
+            closeAuthModal();
+          }, 900);
+        }
+      } else {
+        const res = await service.signUpWithEmail(email, password, fullName);
+        if (res) {
+          if (alertBox && alertMsg) {
+            if (res.session) {
+              alertMsg.textContent = "✓ Account created & signed in successfully!";
+              alertBox.className = "p-3 rounded-xl text-xs font-semibold bg-emerald-50 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800";
+              alertBox.classList.remove("hidden");
+              currentUser = await service.getCurrentUser();
+              if (currentUser) {
+                localStorage.setItem("nutriglance_user", JSON.stringify(currentUser));
+              }
+              updateUserAuthUI();
+              setTimeout(() => {
+                closeAuthModal();
+              }, 1100);
+            } else {
+              alertMsg.textContent = "✓ Account created! Please check your email to confirm your account, then sign in.";
+              alertBox.className = "p-3 rounded-xl text-xs font-semibold bg-blue-50 dark:bg-blue-950/40 text-blue-800 dark:text-blue-300 border border-blue-200 dark:border-blue-800";
+              alertBox.classList.remove("hidden");
+              setTimeout(() => {
+                switchAuthTab("signin");
+              }, 3000);
+            }
           }
         }
       }
+    } else {
+      // 💾 Local Profile Mode (Instant sign-in when Supabase is not yet connected)
+      const cleanName = fullName || email.split("@")[0];
+      const localId = "local_" + btoa(encodeURIComponent(email)).replace(/[^a-zA-Z0-9]/g, "").slice(0, 10);
+      currentUser = {
+        id: localId,
+        email: email,
+        name: cleanName,
+        isLocal: true
+      };
+      localStorage.setItem("nutriglance_user", JSON.stringify(currentUser));
+      updateUserAuthUI();
+
+      if (alertBox && alertMsg) {
+        alertMsg.textContent = `✓ Welcome, ${cleanName}! Signed in successfully.`;
+        alertBox.className = "p-3 rounded-xl text-xs font-semibold bg-emerald-50 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800";
+        alertBox.classList.remove("hidden");
+      }
+
+      setTimeout(() => {
+        closeAuthModal();
+      }, 800);
     }
   } catch (err) {
     if (alertBox && alertMsg) {
@@ -2337,6 +2377,15 @@ window.handleForgotPassword = async function() {
   }
 
   const service = window.SupabaseService || (typeof SupabaseService !== "undefined" ? SupabaseService : null);
+  if (!service || !service.isConfigured()) {
+    if (alertBox && alertMsg) {
+      alertMsg.textContent = "Supabase Cloud is required to send password reset emails. Please connect Supabase first.";
+      alertBox.className = "p-3 rounded-xl text-xs font-semibold bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-800";
+      alertBox.classList.remove("hidden");
+    }
+    return;
+  }
+
   try {
     await service.resetPassword(email);
     if (alertBox && alertMsg) {
@@ -2356,9 +2405,12 @@ window.handleForgotPassword = async function() {
 window.handleSignOut = async function() {
   const service = window.SupabaseService || (typeof SupabaseService !== "undefined" ? SupabaseService : null);
   if (service) {
-    await service.signOut();
+    try {
+      await service.signOut();
+    } catch (e) {}
   }
   currentUser = null;
+  localStorage.removeItem("nutriglance_user");
   updateUserAuthUI();
   const dropdown = document.getElementById("userDropdownMenu");
   if (dropdown) dropdown.classList.add("hidden");
