@@ -1,9 +1,7 @@
 /**
- * API Client with Offline Resilience
- * Communicates with Flask backend and seamlessly falls back to client-side computation if offline.
+ * NutriGlance API & Scientific Calculation Client
+ * High-performance client-side computation with offline resilience and Supabase cloud persistence.
  */
-
-const API_BASE = window.location.origin.startsWith("http") ? window.location.origin : "http://127.0.0.1:5000";
 
 const FALLBACK_FOODS = [
   { id: "p1", name: "Chicken Breast (Cooked, skinless)", category: "Protein", serving: "100g", calories: 165, protein: 31.0, carbs: 0.0, fat: 3.6, vegetarian: false },

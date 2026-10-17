@@ -13,58 +13,29 @@
   <meta property="og:title" content="NutriGlance Calorie Tracker | Precision Nutrition Engine">
   <meta property="og:description" content="Calculate your scientific calorie targets, BMR, TDEE, and macro splits. Log meals by grams with offline resilience and Supabase cloud sync.">
   <meta property="og:site_name" content="NutriGlance">
+  <meta property="og:image" content="/img/og-preview.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
 
   <!-- Twitter Card -->
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="NutriGlance Calorie Tracker">
   <meta name="twitter:description" content="Precision metabolic calorie calculator and itemized meal tracker with client-side computation and cloud sync.">
+  <meta name="twitter:image" content="/img/og-preview.png">
   
-  <!-- Tailwind CSS -->
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script>
-    tailwind.config = {
-      darkMode: 'class',
-      theme: {
-        extend: {
-          colors: {
-            brand: {
-              50: '#eff6ff',
-              100: '#dbeafe',
-              500: '#3b82f6',
-              600: '#2563eb',
-              700: '#1d4ed8',
-            }
-          },
-          fontFamily: {
-            sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
-          }
-        }
-      }
-    }
-  </script>
+  <!-- Precompiled Production Stylesheet (Tailwind CSS + Custom Components) -->
+  <link rel="stylesheet" href="css/style.css">
 
   <!-- Google Font: Inter -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 
-  <!-- Chart.js -->
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
-
-  <!-- Supabase JS Client v2 (with CDN fallback) -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script>
-    if (typeof window.supabase === 'undefined') {
-      document.write('<script src="https://unpkg.com/@supabase/supabase-js@2"><\/script>');
-    }
-  </script>
-
-  <!-- jsPDF & html2canvas for 1-Click PDF Report Generation -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-
-  <!-- Custom Stylesheet -->
-  <link rel="stylesheet" href="css/style.css">
+  <!-- Deferred Vendor Libraries (Non-blocking Fast First Paint) -->
+  <script defer src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script defer src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script defer src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 </head>
 <body class="min-h-full bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100 font-sans antialiased selection:bg-blue-500 selection:text-white transition-colors duration-200">
 
@@ -98,7 +69,7 @@
 
         <!-- User Profile Widget (shown in nav bar after sign in completed) -->
         <div class="relative hidden" id="userProfileWidget">
-          <button id="userProfileBtn" onclick="toggleUserDropdown(event)" class="flex items-center gap-1.5 p-1 sm:p-1.5 pr-2 sm:pr-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-xs font-semibold transition-all shadow-sm border border-slate-200 dark:border-slate-700">
+          <button id="userProfileBtn" aria-haspopup="true" aria-expanded="false" aria-label="User account and navigation menu" onclick="toggleUserDropdown(event)" class="flex items-center gap-1.5 p-1 sm:p-1.5 pr-2 sm:pr-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-xs font-semibold transition-all shadow-sm border border-slate-200 dark:border-slate-700">
             <div class="w-6 h-6 rounded-lg bg-gradient-to-tr from-blue-600 to-indigo-600 text-white flex items-center justify-center font-bold text-[10px]" id="userAvatarText">
               U
             </div>
@@ -237,14 +208,14 @@
         </div>
 
         <!-- Print Summary Button (Desktop / Tablet) -->
-        <button id="printReportBtn" class="hidden sm:flex p-2 rounded-xl text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 transition-all" title="Print or Save PDF Summary">
+        <button id="printReportBtn" aria-label="Print or save PDF summary" class="hidden sm:flex p-2 rounded-xl text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 transition-all" title="Print or Save PDF Summary">
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
           </svg>
         </button>
 
         <!-- Theme Toggle -->
-        <button id="themeToggleBtn" class="p-1.5 sm:p-2 rounded-xl text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 transition-all" title="Toggle Dark/Light Mode">
+        <button id="themeToggleBtn" aria-label="Toggle dark or light theme" class="p-1.5 sm:p-2 rounded-xl text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 transition-all" title="Toggle Dark/Light Mode">
           <span id="themeIcon">
             <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path></svg>
           </span>
@@ -299,11 +270,11 @@
           <!-- Measurement Unit Toggle (Metric vs Imperial) -->
           <div class="flex items-center justify-between p-1 rounded-xl bg-slate-100 dark:bg-slate-800">
             <span class="text-xs font-semibold px-2 text-slate-600 dark:text-slate-400">Measurement Units:</span>
-            <div class="flex items-center gap-1">
-              <button type="button" id="unitMetricBtn" onclick="setUnitSystem('metric')" class="px-2.5 py-1 rounded-lg text-xs font-bold transition-all bg-blue-600 text-white shadow-sm">
+            <div class="flex items-center gap-1" role="group" aria-label="Measurement unit system">
+              <button type="button" id="unitMetricBtn" onclick="setUnitSystem('metric')" class="px-2.5 py-1 rounded-lg text-xs font-bold transition-all bg-blue-600 text-white shadow-sm" aria-pressed="true">
                 Metric (kg, cm)
               </button>
-              <button type="button" id="unitImperialBtn" onclick="setUnitSystem('imperial')" class="px-2.5 py-1 rounded-lg text-xs font-bold transition-all text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white">
+              <button type="button" id="unitImperialBtn" onclick="setUnitSystem('imperial')" class="px-2.5 py-1 rounded-lg text-xs font-bold transition-all text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white" aria-pressed="false">
                 Imperial (lbs, ft/in)
               </button>
             </div>
@@ -1289,11 +1260,11 @@
   <!-- ============================================================ -->
   <!-- 📄 PDF Period Report Modal Preview & Download Dialog         -->
   <!-- ============================================================ -->
-  <div id="periodReportModal" class="hidden fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-3 sm:p-6 overflow-y-auto">
+  <div id="periodReportModal" role="dialog" aria-modal="true" aria-labelledby="modalReportTitle" class="hidden fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-3 sm:p-6 overflow-y-auto">
     <div class="bg-white dark:bg-slate-900 rounded-2xl max-w-4xl w-full max-h-[92vh] flex flex-col shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden">
       
       <!-- Modal Header -->
-      <div class="p-4 sm:px-6 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50 dark:bg-slate-850">
+      <div class="p-4 sm:px-6 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50 dark:bg-slate-855">
         <div class="flex items-center gap-2">
           <span class="text-xl">📄</span>
           <div>
@@ -1302,15 +1273,15 @@
           </div>
         </div>
         <div class="flex items-center gap-2">
-          <button type="button" onclick="downloadPdfDirect()" id="downloadPdfBtn" class="flex items-center gap-1.5 px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white rounded-xl text-xs font-bold shadow-md shadow-red-500/20 transition-all cursor-pointer">
+          <button type="button" onclick="downloadPdfDirect()" id="downloadPdfBtn" aria-label="Download PDF report" class="flex items-center gap-1.5 px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white rounded-xl text-xs font-bold shadow-md shadow-red-500/20 transition-all cursor-pointer">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
             <span id="downloadPdfBtnText">Download PDF</span>
           </button>
-          <button type="button" onclick="printPeriodReportDoc()" class="flex items-center gap-1.5 px-3 py-1.5 bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 text-slate-800 dark:text-white rounded-xl text-xs font-semibold transition-all">
+          <button type="button" onclick="printPeriodReportDoc()" aria-label="Print period report" class="flex items-center gap-1.5 px-3 py-1.5 bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 text-slate-800 dark:text-white rounded-xl text-xs font-semibold transition-all">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
             <span>Print</span>
           </button>
-          <button type="button" onclick="closePeriodReportModal()" class="w-8 h-8 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 text-slate-500 flex items-center justify-center font-bold text-sm transition-all">
+          <button type="button" onclick="closePeriodReportModal()" aria-label="Close PDF report dialog" class="w-8 h-8 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 text-slate-500 flex items-center justify-center font-bold text-sm transition-all">
             ✕
           </button>
         </div>
@@ -1331,9 +1302,9 @@
   <!-- ============================================================ -->
   <!-- ⚡ Supabase Configuration & Connection Modal                 -->
   <!-- ============================================================ -->
-  <div id="supabaseConfigModal" onclick="if (event.target === this) closeSupabaseModal();" class="hidden fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+  <div id="supabaseConfigModal" role="dialog" aria-modal="true" aria-labelledby="supabaseModalTitle" onclick="if (event.target === this) closeSupabaseModal();" class="hidden fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
     <div class="bg-white dark:bg-slate-900 rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-slate-200 dark:border-slate-800 space-y-5 text-left relative max-h-[90vh] overflow-y-auto">
-      <button type="button" onclick="closeSupabaseModal()" class="absolute right-4 top-4 text-slate-400 hover:text-slate-600 dark:hover:text-white text-lg font-bold">
+      <button type="button" onclick="closeSupabaseModal()" aria-label="Close Supabase configuration modal" class="absolute right-4 top-4 text-slate-400 hover:text-slate-600 dark:hover:text-white text-lg font-bold">
         ✕
       </button>
 
@@ -1401,11 +1372,11 @@
   <!-- ============================================================ -->
   <!-- Email Authentication Modal                                  -->
   <!-- ============================================================ -->
-  <div id="emailAuthModal" onclick="if (event.target === this) closeAuthModal();" class="hidden fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4">
+  <div id="emailAuthModal" role="dialog" aria-modal="true" aria-labelledby="authModalTitle" onclick="if (event.target === this) closeAuthModal();" class="hidden fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4">
     <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl sm:rounded-3xl max-w-md w-full p-5 sm:p-6 shadow-2xl relative space-y-4 max-h-[90vh] overflow-y-auto animate-in fade-in zoom-in-95 duration-150">
       
       <!-- Close Button -->
-      <button type="button" onclick="closeAuthModal()" class="absolute top-5 right-5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1 rounded-lg">
+      <button type="button" onclick="closeAuthModal()" aria-label="Close authentication dialog" class="absolute top-5 right-5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1 rounded-lg">
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
       </button>
 
@@ -1419,35 +1390,35 @@
       </div>
 
       <!-- Tab Switcher: Sign In vs Sign Up -->
-      <div class="grid grid-cols-2 p-1 bg-slate-100 dark:bg-slate-800 rounded-xl text-xs font-semibold">
-        <button type="button" id="authTabSignIn" onclick="switchAuthTab('signin')" class="py-2 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm transition-all text-center">
+      <div class="grid grid-cols-2 p-1 bg-slate-100 dark:bg-slate-800 rounded-xl text-xs font-semibold" role="tablist" aria-label="Authentication mode">
+        <button type="button" id="authTabSignIn" role="tab" aria-selected="true" onclick="switchAuthTab('signin')" class="py-2 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm transition-all text-center">
           Sign In
         </button>
-        <button type="button" id="authTabSignUp" onclick="switchAuthTab('signup')" class="py-2 rounded-lg text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-all text-center">
+        <button type="button" id="authTabSignUp" role="tab" aria-selected="false" onclick="switchAuthTab('signup')" class="py-2 rounded-lg text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-all text-center">
           Create Account
         </button>
       </div>
 
       <!-- Alert Box -->
-      <div id="authAlertBanner" class="hidden p-3 rounded-xl text-xs font-medium flex items-center justify-between">
+      <div id="authAlertBanner" class="hidden p-3 rounded-xl text-xs font-medium flex items-center justify-between" role="alert">
         <span id="authAlertMessage"></span>
       </div>
 
       <!-- Form -->
       <form id="emailAuthForm" onsubmit="handleEmailAuthSubmit(event)" class="space-y-3">
         <div id="authNameField" class="hidden">
-          <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Full Name</label>
+          <label for="authFullNameInput" class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Full Name</label>
           <input type="text" id="authFullNameInput" placeholder="Alex Morgan" class="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 outline-none focus:ring-2 focus:ring-blue-500 text-slate-900 dark:text-white">
         </div>
 
         <div>
-          <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Email Address</label>
+          <label for="authEmailInput" class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Email Address</label>
           <input type="email" id="authEmailInput" required placeholder="you@example.com" class="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 outline-none focus:ring-2 focus:ring-blue-500 text-slate-900 dark:text-white">
         </div>
 
         <div>
           <div class="flex items-center justify-between mb-1">
-            <label class="block text-xs font-bold text-slate-700 dark:text-slate-300">Password</label>
+            <label for="authPasswordInput" class="block text-xs font-bold text-slate-700 dark:text-slate-300">Password</label>
             <button type="button" id="authForgotBtn" onclick="handleForgotPassword()" class="text-[11px] text-blue-600 dark:text-blue-400 hover:underline">Forgot password?</button>
           </div>
           <input type="password" id="authPasswordInput" required minlength="6" placeholder="••••••••" class="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 outline-none focus:ring-2 focus:ring-blue-500 text-slate-900 dark:text-white">
@@ -1459,8 +1430,8 @@
         </button>
       </form>
 
-      <p class="text-[10px] text-center text-slate-400">
-        🔒 Secured by Supabase Auth with Row Level Security.
+      <p id="authSecurityNotice" class="text-[10px] text-center text-slate-400">
+        💾 Local Session (Stored in browser localStorage). Connect Supabase in settings to sync across devices.
       </p>
     </div>
   </div>

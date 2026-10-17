@@ -43,8 +43,14 @@ function setUnitSystem(unit) {
   const heightInchesInput = document.getElementById("heightInchesInput");
 
   if (unit === "imperial") {
-    if (metricBtn) { metricBtn.className = "px-2.5 py-1 rounded-lg text-xs font-bold transition-all text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white"; }
-    if (imperialBtn) { imperialBtn.className = "px-2.5 py-1 rounded-lg text-xs font-bold transition-all bg-blue-600 text-white shadow-sm"; }
+    if (metricBtn) {
+      metricBtn.className = "px-2.5 py-1 rounded-lg text-xs font-bold transition-all text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white";
+      metricBtn.setAttribute("aria-pressed", "false");
+    }
+    if (imperialBtn) {
+      imperialBtn.className = "px-2.5 py-1 rounded-lg text-xs font-bold transition-all bg-blue-600 text-white shadow-sm";
+      imperialBtn.setAttribute("aria-pressed", "true");
+    }
     if (metricHeight) metricHeight.classList.add("hidden");
     if (imperialHeight) imperialHeight.classList.remove("hidden");
     if (weightLabel) weightLabel.textContent = "lbs";
@@ -65,8 +71,14 @@ function setUnitSystem(unit) {
       if (heightInchesInput) heightInchesInput.value = inRem;
     }
   } else {
-    if (metricBtn) { metricBtn.className = "px-2.5 py-1 rounded-lg text-xs font-bold transition-all bg-blue-600 text-white shadow-sm"; }
-    if (imperialBtn) { imperialBtn.className = "px-2.5 py-1 rounded-lg text-xs font-bold transition-all text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white"; }
+    if (metricBtn) {
+      metricBtn.className = "px-2.5 py-1 rounded-lg text-xs font-bold transition-all bg-blue-600 text-white shadow-sm";
+      metricBtn.setAttribute("aria-pressed", "true");
+    }
+    if (imperialBtn) {
+      imperialBtn.className = "px-2.5 py-1 rounded-lg text-xs font-bold transition-all text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white";
+      imperialBtn.setAttribute("aria-pressed", "false");
+    }
     if (metricHeight) metricHeight.classList.remove("hidden");
     if (imperialHeight) imperialHeight.classList.add("hidden");
     if (weightLabel) weightLabel.textContent = "kg";
@@ -145,6 +157,10 @@ function initTheme() {
 function updateThemeIcon() {
   const isDark = document.documentElement.classList.contains("dark");
   const icon = document.getElementById("themeIcon");
+  const btn = document.getElementById("themeToggleBtn");
+  if (btn) {
+    btn.setAttribute("aria-label", isDark ? "Switch to light theme" : "Switch to dark theme");
+  }
   if (icon) {
     icon.innerHTML = isDark
       ? `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>`
@@ -2288,7 +2304,9 @@ window.closeNavHistoryDropdown = function() {
 
 window.closeUserDropdown = function() {
   const menu = document.getElementById("userDropdownMenu");
+  const btn = document.getElementById("userProfileBtn");
   if (menu) menu.classList.add("hidden");
+  if (btn) btn.setAttribute("aria-expanded", "false");
 };
 
 window.navGoToHistory = function(period) {
@@ -2410,12 +2428,23 @@ window.openAuthModal = function(tab = "signin") {
   const service = window.SupabaseService || (typeof SupabaseService !== "undefined" ? SupabaseService : null);
   const alertBox = document.getElementById("authAlertBanner");
   const alertMsg = document.getElementById("authAlertMessage");
+  const securityNotice = document.getElementById("authSecurityNotice");
 
   if (!service || !service.isConfigured()) {
+    if (securityNotice) {
+      securityNotice.textContent = "💾 Local Session (Stored in browser localStorage). Connect Supabase in settings to sync across devices.";
+    }
     if (alertBox && alertMsg) {
-      alertMsg.innerHTML = `<span class="flex items-center gap-1.5"><span>💡</span><span>Local mode active. <button type="button" onclick="closeAuthModal(); openSupabaseModal();" class="underline font-bold text-blue-600 dark:text-blue-400 hover:text-blue-700 ml-1">Connect Supabase for cloud sync →</button></span></span>`;
+      alertMsg.innerHTML = `<span class="flex items-center gap-1.5"><span>ℹ️</span><span>Local mode active: Data is saved to this browser. <button type="button" onclick="closeAuthModal(); openSupabaseModal();" class="underline font-bold text-blue-600 dark:text-blue-400 hover:text-blue-700 ml-1">Connect Supabase for cloud sync →</button></span></span>`;
       alertBox.className = "p-3 rounded-xl text-xs font-medium bg-blue-50 dark:bg-blue-950/50 text-blue-800 dark:text-blue-300 border border-blue-200 dark:border-blue-800 flex items-center justify-between";
       alertBox.classList.remove("hidden");
+    }
+  } else {
+    if (securityNotice) {
+      securityNotice.textContent = "🔒 Secured by Supabase Auth with Row Level Security.";
+    }
+    if (alertBox) {
+      alertBox.classList.add("hidden");
     }
   }
 };
@@ -2440,7 +2469,11 @@ window.switchAuthTab = function(tab) {
   const modalSub = document.getElementById("authModalSubtitle");
   const alertBox = document.getElementById("authAlertBanner");
 
-  if (alertBox) alertBox.classList.add("hidden");
+  if (tabIn) tabIn.setAttribute("aria-selected", isSignIn ? "true" : "false");
+  if (tabUp) tabUp.setAttribute("aria-selected", isSignIn ? "false" : "true");
+
+  const service = window.SupabaseService || (typeof SupabaseService !== "undefined" ? SupabaseService : null);
+  const isCloud = service && service.isConfigured();
 
   if (isSignIn) {
     if (tabIn) tabIn.className = "py-2 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm transition-all text-center";
@@ -2449,7 +2482,7 @@ window.switchAuthTab = function(tab) {
     if (forgotBtn) forgotBtn.classList.remove("hidden");
     if (submitText) submitText.textContent = "Sign In";
     if (modalTitle) modalTitle.textContent = "Welcome Back";
-    if (modalSub) modalSub.textContent = "Sign in to access your nutritional targets and meals.";
+    if (modalSub) modalSub.textContent = isCloud ? "Sign in with your email to access your synchronized nutritional targets and meals." : "Sign in to access your nutritional targets and meals in this browser.";
   } else {
     if (tabIn) tabIn.className = "py-2 rounded-lg text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-all text-center";
     if (tabUp) tabUp.className = "py-2 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm transition-all text-center";
@@ -2457,7 +2490,7 @@ window.switchAuthTab = function(tab) {
     if (forgotBtn) forgotBtn.classList.add("hidden");
     if (submitText) submitText.textContent = "Create Account";
     if (modalTitle) modalTitle.textContent = "Create an Account";
-    if (modalSub) modalSub.textContent = "Register with your email to store your meals privately in Supabase.";
+    if (modalSub) modalSub.textContent = isCloud ? "Register with your email to sync your meals privately in Supabase." : "Register to create your personal profile and save meals in this browser.";
   }
 };
 
@@ -2650,7 +2683,12 @@ window.handleSignOut = async function() {
 window.toggleUserDropdown = function(event) {
   if (event) event.stopPropagation();
   const menu = document.getElementById("userDropdownMenu");
-  if (menu) menu.classList.toggle("hidden");
+  const btn = document.getElementById("userProfileBtn");
+  if (menu) {
+    menu.classList.toggle("hidden");
+    const isExpanded = !menu.classList.contains("hidden");
+    if (btn) btn.setAttribute("aria-expanded", isExpanded ? "true" : "false");
+  }
 };
 
 // Global click-outside listener to close dropdowns smoothly
@@ -2668,6 +2706,8 @@ document.addEventListener("click", function(event) {
   if (userDropdown && !userDropdown.classList.contains("hidden")) {
     if (userWidget && !userWidget.contains(event.target)) {
       userDropdown.classList.add("hidden");
+      const userBtn = document.getElementById("userProfileBtn");
+      if (userBtn) userBtn.setAttribute("aria-expanded", "false");
     }
   }
 });
