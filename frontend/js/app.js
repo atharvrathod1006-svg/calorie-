@@ -824,8 +824,8 @@ function renderFoodSearchResults(foods) {
   }
 
   container.innerHTML = foods.map(f => `
-    <div class="p-3 bg-white dark:bg-slate-800/80 rounded-xl border border-slate-200 dark:border-slate-700/60 flex items-center justify-between hover:border-blue-400 transition-all">
-      <div>
+    <div class="p-3 bg-white dark:bg-slate-800/80 rounded-xl border border-slate-200 dark:border-slate-700/60 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 hover:border-blue-400 transition-all">
+      <div class="min-w-0 flex-1">
         <div class="flex items-center gap-1.5 flex-wrap">
           <h5 class="text-xs font-semibold text-slate-900 dark:text-white">${f.name}</h5>
           <span class="text-[10px] px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300">${f.category}</span>
@@ -835,9 +835,9 @@ function renderFoodSearchResults(foods) {
           ${f.serving} • <strong class="text-blue-600 dark:text-blue-400">${f.calories} kcal</strong> (P: ${f.protein}g | C: ${f.carbs}g | F: ${f.fat}g)
         </p>
       </div>
-      <div class="flex items-center gap-1.5">
+      <div class="flex items-center gap-1.5 self-end sm:self-center shrink-0">
         <div class="flex items-center bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg overflow-hidden" title="Enter grams consumed (or leave empty to use 1x serving)">
-          <input type="number" id="grams_${f.id}" placeholder="100" min="1" max="2000" class="w-11 text-xs py-1 px-1 bg-transparent text-center font-bold text-blue-600 dark:text-blue-400 outline-none">
+          <input type="number" id="grams_${f.id}" placeholder="100" min="1" max="2000" class="w-12 text-xs py-1 px-1 bg-transparent text-center font-bold text-blue-600 dark:text-blue-400 outline-none">
           <span class="text-[10px] text-slate-400 pr-1.5 font-semibold">g</span>
         </div>
         <select id="mealType_${f.id}" class="text-xs px-2 py-1 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg text-slate-700 dark:text-slate-200">
@@ -937,15 +937,15 @@ function renderMealLog(meals, totals) {
         </div>
         <div class="space-y-1.5">
           ${items.map(item => `
-            <div class="p-2.5 bg-slate-50 dark:bg-slate-800/60 rounded-lg flex items-center justify-between text-xs border border-slate-100 dark:border-slate-700/50">
-              <div>
-                <span class="font-medium text-slate-800 dark:text-slate-200">${item.name}</span>
-                <span class="text-slate-400 text-[11px] ml-1">(${item.serving})</span>
+            <div class="p-2.5 bg-slate-50 dark:bg-slate-800/60 rounded-lg flex items-center justify-between gap-2 text-xs border border-slate-100 dark:border-slate-700/50">
+              <div class="min-w-0 flex-1">
+                <span class="font-medium text-slate-800 dark:text-slate-200 truncate block sm:inline">${item.name}</span>
+                <span class="text-slate-400 text-[11px] sm:ml-1">(${item.serving})</span>
               </div>
-              <div class="flex items-center gap-3">
-                <span class="font-semibold text-slate-700 dark:text-slate-300">${item.calories} kcal</span>
-                <span class="text-[10px] text-slate-400">P:${item.protein} C:${item.carbs} F:${item.fat}</span>
-                <button onclick="removeMeal('${item.id}')" class="text-slate-400 hover:text-red-500 transition-colors" title="Delete">
+              <div class="flex items-center gap-2 sm:gap-3 shrink-0">
+                <span class="font-semibold text-slate-700 dark:text-slate-300 whitespace-nowrap">${item.calories} kcal</span>
+                <span class="text-[10px] text-slate-400 hidden xs:inline sm:inline">P:${item.protein} C:${item.carbs} F:${item.fat}</span>
+                <button onclick="removeMeal('${item.id}')" class="text-slate-400 hover:text-red-500 transition-colors p-1" title="Delete">
                   <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
                 </button>
               </div>
@@ -2169,15 +2169,20 @@ window.openAuthModal = function(tab = "signin") {
   const modal = document.getElementById("emailAuthModal");
   if (!modal) return;
 
-  const service = window.SupabaseService || (typeof SupabaseService !== "undefined" ? SupabaseService : null);
-  if (!service || !service.isConfigured()) {
-    alert("Please connect to your Supabase project first using the 'Supabase' button on the navbar.");
-    openSupabaseModal();
-    return;
-  }
-
   modal.classList.remove("hidden");
   switchAuthTab(tab);
+
+  const service = window.SupabaseService || (typeof SupabaseService !== "undefined" ? SupabaseService : null);
+  const alertBox = document.getElementById("authAlertBanner");
+  const alertMsg = document.getElementById("authAlertMessage");
+
+  if (!service || !service.isConfigured()) {
+    if (alertBox && alertMsg) {
+      alertMsg.innerHTML = `<span>⚠️ Supabase Cloud is not connected yet.</span> <button type="button" onclick="closeAuthModal(); openSupabaseModal();" class="underline font-bold text-amber-900 dark:text-amber-200 ml-1">Connect Supabase →</button>`;
+      alertBox.className = "p-3 rounded-xl text-xs font-medium bg-amber-50 dark:bg-amber-950/50 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-800 flex items-center justify-between";
+      alertBox.classList.remove("hidden");
+    }
+  }
 };
 
 window.closeAuthModal = function() {
@@ -2224,9 +2229,18 @@ window.switchAuthTab = function(tab) {
 window.handleEmailAuthSubmit = async function(event) {
   if (event) event.preventDefault();
 
+  const alertBox = document.getElementById("authAlertBanner");
+  const alertMsg = document.getElementById("authAlertMessage");
   const service = window.SupabaseService || (typeof SupabaseService !== "undefined" ? SupabaseService : null);
+
   if (!service || !service.isConfigured()) {
-    alert("Please connect to your Supabase project first.");
+    if (alertBox && alertMsg) {
+      alertMsg.innerHTML = `<span>Please connect Supabase first.</span> <button type="button" onclick="closeAuthModal(); openSupabaseModal();" class="underline font-bold text-amber-900 dark:text-amber-200 ml-1">Connect now →</button>`;
+      alertBox.className = "p-3 rounded-xl text-xs font-semibold bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-800 flex items-center justify-between";
+      alertBox.classList.remove("hidden");
+    } else {
+      alert("Please connect to your Supabase project first.");
+    }
     return;
   }
 

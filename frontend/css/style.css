@@ -23,6 +23,32 @@
   background: rgba(107, 114, 128, 0.8);
 }
 
+/* Hide scrollbar for mobile swipeable containers */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* Smooth touch scrolling and tap highlighting */
+html {
+  scroll-behavior: smooth;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Prevent iOS Safari from auto-zooming on focus when font-size < 16px */
+@media (max-width: 640px) {
+  input[type="text"],
+  input[type="number"],
+  input[type="email"],
+  input[type="password"],
+  select {
+    font-size: 16px !important;
+  }
+}
+
 /* Glassmorphism subtle effect */
 .glass-card {
   backdrop-filter: blur(8px);

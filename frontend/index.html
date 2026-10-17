@@ -87,15 +87,15 @@
       </div>
 
       <!-- Action Items & Controls -->
-      <div class="flex items-center gap-2 sm:gap-3">
+      <div class="flex items-center gap-1.5 sm:gap-2.5">
         <!-- History Option in Login Bar -->
         <div class="relative" id="navHistoryDropdownWrapper">
-          <button id="navHistoryBtn" onclick="toggleNavHistoryDropdown(event)" class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-blue-200 dark:border-blue-800/80 bg-blue-50/90 dark:bg-blue-950/60 hover:bg-blue-100 dark:hover:bg-blue-900/60 text-blue-700 dark:text-blue-300 text-xs font-bold shadow-sm transition-all" title="Calorie Intake History & Reports">
-            <svg class="w-4 h-4 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <button id="navHistoryBtn" onclick="toggleNavHistoryDropdown(event)" class="flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1.5 rounded-xl border border-blue-200 dark:border-blue-800/80 bg-blue-50/90 dark:bg-blue-950/60 hover:bg-blue-100 dark:hover:bg-blue-900/60 text-blue-700 dark:text-blue-300 text-xs font-bold shadow-sm transition-all" title="Calorie Intake History & Reports">
+            <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4 text-blue-600 dark:text-blue-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
             <span>History</span>
-            <svg class="w-3 h-3 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+            <svg class="w-3 h-3 text-blue-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
           </button>
 
           <!-- History Dropdown Menu -->
@@ -162,19 +162,19 @@
         </div>
 
         <!-- Email Sign In Button (shown when logged out) -->
-        <button id="authSignInBtn" onclick="openAuthModal('signin')" class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-100 text-xs font-bold shadow-sm transition-all" title="Sign In or Register with Email">
-          <svg class="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
+        <button id="authSignInBtn" onclick="openAuthModal('signin')" class="flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-100 text-xs font-bold shadow-sm transition-all" title="Sign In or Register with Email">
+          <svg class="w-3.5 h-3.5 text-blue-600 dark:text-blue-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
           <span>Sign In</span>
         </button>
 
         <!-- User Profile Widget (shown when logged in) -->
         <div class="relative hidden" id="userProfileWidget">
-          <button id="userProfileBtn" onclick="toggleUserDropdown(event)" class="flex items-center gap-2 p-1.5 pr-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-xs font-semibold transition-all">
+          <button id="userProfileBtn" onclick="toggleUserDropdown(event)" class="flex items-center gap-1.5 p-1 sm:p-1.5 pr-2 sm:pr-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-xs font-semibold transition-all">
             <div class="w-6 h-6 rounded-lg bg-gradient-to-tr from-blue-600 to-indigo-600 text-white flex items-center justify-center font-bold text-[10px]" id="userAvatarText">
               U
             </div>
-            <span id="userNameSpan" class="max-w-[100px] truncate text-slate-700 dark:text-slate-200 font-medium">User</span>
-            <svg class="w-3 h-3 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+            <span id="userNameSpan" class="max-w-[70px] sm:max-w-[100px] truncate text-slate-700 dark:text-slate-200 font-medium">User</span>
+            <svg class="w-3 h-3 text-slate-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
           </button>
 
           <!-- Dropdown Menu -->
@@ -197,25 +197,25 @@
         </div>
 
         <!-- Supabase Cloud Connection & Settings Button -->
-        <button id="supabaseConfigBtn" onclick="openSupabaseModal()" class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border border-emerald-200 dark:border-emerald-800/80 bg-emerald-50/90 dark:bg-emerald-950/50 hover:bg-emerald-100 dark:hover:bg-emerald-900/60 text-emerald-700 dark:text-emerald-300 text-xs font-bold shadow-sm transition-all" title="Connect to your Supabase Project">
-          <svg class="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" viewBox="0 0 24 24" fill="currentColor">
+        <button id="supabaseConfigBtn" onclick="openSupabaseModal()" class="flex items-center gap-1 sm:gap-1.5 px-2 sm:px-2.5 py-1.5 rounded-xl border border-emerald-200 dark:border-emerald-800/80 bg-emerald-50/90 dark:bg-emerald-950/50 hover:bg-emerald-100 dark:hover:bg-emerald-900/60 text-emerald-700 dark:text-emerald-300 text-xs font-bold shadow-sm transition-all" title="Connect to your Supabase Project">
+          <svg class="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" viewBox="0 0 24 24" fill="currentColor">
             <path d="M21.362 9.354H12V.396a.396.396 0 0 0-.716-.233L.117 14.167a.396.396 0 0 0 .313.633h9.362v8.958a.396.396 0 0 0 .716.233l11.167-14.004a.396.396 0 0 0-.313-.633z"/>
           </svg>
-          <span id="supabaseStatusText">Supabase</span>
-          <span id="supabaseStatusDot" class="w-2 h-2 rounded-full bg-slate-400"></span>
+          <span id="supabaseStatusText" class="inline">Supabase</span>
+          <span id="supabaseStatusDot" class="w-2 h-2 rounded-full bg-slate-400 shrink-0"></span>
         </button>
 
-        <!-- Print Summary Button -->
-        <button id="printReportBtn" class="p-2 rounded-xl text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 transition-all" title="Print or Save PDF Summary">
+        <!-- Print Summary Button (Desktop / Tablet) -->
+        <button id="printReportBtn" class="hidden sm:flex p-2 rounded-xl text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 transition-all" title="Print or Save PDF Summary">
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
           </svg>
         </button>
 
         <!-- Theme Toggle -->
-        <button id="themeToggleBtn" class="p-2 rounded-xl text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 transition-all" title="Toggle Dark/Light Mode">
+        <button id="themeToggleBtn" class="p-1.5 sm:p-2 rounded-xl text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 transition-all" title="Toggle Dark/Light Mode">
           <span id="themeIcon">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path></svg>
+            <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path></svg>
           </span>
         </button>
       </div>
@@ -801,14 +801,14 @@
           </div>
 
           <!-- Category Filter Buttons -->
-          <div class="flex flex-wrap gap-1 text-[11px]">
-            <button class="food-cat-btn px-2.5 py-1 rounded-lg bg-blue-600 text-white font-medium transition-all" data-category="all">All</button>
-            <button class="food-cat-btn px-2.5 py-1 rounded-lg text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/60 hover:bg-emerald-100 dark:hover:bg-emerald-900 font-semibold transition-all" data-category="vegetarian">🌱 Vegetarian</button>
-            <button class="food-cat-btn px-2.5 py-1 rounded-lg text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 font-medium transition-all" data-category="Protein">Protein</button>
-            <button class="food-cat-btn px-2.5 py-1 rounded-lg text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 font-medium transition-all" data-category="Carbs">Carbs</button>
-            <button class="food-cat-btn px-2.5 py-1 rounded-lg text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 font-medium transition-all" data-category="Dairy">Dairy</button>
-            <button class="food-cat-btn px-2.5 py-1 rounded-lg text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 font-medium transition-all" data-category="Fruit">Fruit</button>
-            <button class="food-cat-btn px-2.5 py-1 rounded-lg text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 font-medium transition-all" data-category="Fats">Healthy Fats</button>
+          <div class="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-1 text-[11px] sm:flex-wrap">
+            <button class="food-cat-btn shrink-0 px-2.5 py-1 rounded-lg bg-blue-600 text-white font-medium transition-all" data-category="all">All</button>
+            <button class="food-cat-btn shrink-0 px-2.5 py-1 rounded-lg text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/60 hover:bg-emerald-100 dark:hover:bg-emerald-900 font-semibold transition-all" data-category="vegetarian">🌱 Vegetarian</button>
+            <button class="food-cat-btn shrink-0 px-2.5 py-1 rounded-lg text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 font-medium transition-all" data-category="Protein">Protein</button>
+            <button class="food-cat-btn shrink-0 px-2.5 py-1 rounded-lg text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 font-medium transition-all" data-category="Carbs">Carbs</button>
+            <button class="food-cat-btn shrink-0 px-2.5 py-1 rounded-lg text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 font-medium transition-all" data-category="Dairy">Dairy</button>
+            <button class="food-cat-btn shrink-0 px-2.5 py-1 rounded-lg text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 font-medium transition-all" data-category="Fruit">Fruit</button>
+            <button class="food-cat-btn shrink-0 px-2.5 py-1 rounded-lg text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 font-medium transition-all" data-category="Fats">Healthy Fats</button>
           </div>
 
           <!-- Search Results Scrollable List -->
@@ -1322,11 +1322,13 @@
         💡 If Supabase is disconnected, NutriGlance automatically saves your data offline in browser localStorage.
       </p>
     </div>
+  </div>
+
   <!-- ============================================================ -->
   <!-- Email Authentication Modal                                  -->
   <!-- ============================================================ -->
-  <div id="emailAuthModal" class="hidden fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
-    <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl max-w-md w-full p-6 shadow-2xl relative space-y-4 animate-in fade-in zoom-in-95 duration-150">
+  <div id="emailAuthModal" class="hidden fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4">
+    <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl sm:rounded-3xl max-w-md w-full p-5 sm:p-6 shadow-2xl relative space-y-4 max-h-[90vh] overflow-y-auto animate-in fade-in zoom-in-95 duration-150">
       
       <!-- Close Button -->
       <button type="button" onclick="closeAuthModal()" class="absolute top-5 right-5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1 rounded-lg">
