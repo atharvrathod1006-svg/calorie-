@@ -210,6 +210,70 @@ const SupabaseService = {
 
 
 
+  // -------------------------------------------------------------
+  // Email Authentication via Supabase
+  // -------------------------------------------------------------
+  async signUpWithEmail(email, password, fullName = "") {
+    if (!this.client) {
+      throw new Error("Please configure your Supabase URL & Anon Key first.");
+    }
+    const cleanEmail = (email || "").trim();
+    const cleanPassword = (password || "").trim();
+    if (!cleanEmail || !cleanPassword) {
+      throw new Error("Email and password are required.");
+    }
+    if (cleanPassword.length < 6) {
+      throw new Error("Password must be at least 6 characters.");
+    }
+
+    const { data, error } = await this.client.auth.signUp({
+      email: cleanEmail,
+      password: cleanPassword,
+      options: {
+        data: {
+          full_name: fullName.trim() || cleanEmail.split("@")[0]
+        }
+      }
+    });
+
+    if (error) throw error;
+    return data;
+  },
+
+  async signInWithEmail(email, password) {
+    if (!this.client) {
+      throw new Error("Please configure your Supabase URL & Anon Key first.");
+    }
+    const cleanEmail = (email || "").trim();
+    const cleanPassword = (password || "").trim();
+    if (!cleanEmail || !cleanPassword) {
+      throw new Error("Please enter both email and password.");
+    }
+
+    const { data, error } = await this.client.auth.signInWithPassword({
+      email: cleanEmail,
+      password: cleanPassword
+    });
+
+    if (error) throw error;
+    return data;
+  },
+
+  async resetPassword(email) {
+    if (!this.client) {
+      throw new Error("Please configure your Supabase URL & Anon Key first.");
+    }
+    const cleanEmail = (email || "").trim();
+    if (!cleanEmail) throw new Error("Please enter your email address.");
+
+    const { data, error } = await this.client.auth.resetPasswordForEmail(cleanEmail, {
+      redirectTo: window.location.origin + window.location.pathname
+    });
+
+    if (error) throw error;
+    return data;
+  },
+
   async signOut() {
     if (this.client) {
       await this.client.auth.signOut();
@@ -226,8 +290,8 @@ const SupabaseService = {
           id: session.user.id,
           email: session.user.email,
           name: session.user.user_metadata?.full_name || session.user.email?.split("@")[0] || "User",
-          picture: session.user.user_metadata?.avatar_url || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=80&auto=format&fit=crop&q=80",
-          provider: "supabase"
+          picture: session.user.user_metadata?.avatar_url || "",
+          provider: "supabase_email"
         };
       }
     } catch (e) {
@@ -249,7 +313,11 @@ const SupabaseService = {
   async fetchMeals(date = "") {
     if (!this.client) return null;
     try {
+      const user = await this.getCurrentUser();
       let query = this.client.from("meals").select("*").order("created_at", { ascending: true });
+      if (user && user.id) {
+        query = query.or(`user_id.eq.${user.id},user_id.is.null`);
+      }
       if (date && date !== "all") {
         query = query.eq("date", date);
       }
@@ -268,9 +336,10 @@ const SupabaseService = {
   async insertMeal(meal) {
     if (!this.client) return null;
     try {
+      const user = await this.getCurrentUser();
       const record = {
         id: meal.id || Math.random().toString(36).substring(2, 10),
-        user_id: meal.user_id || null,
+        user_id: (user && user.id) ? user.id : (meal.user_id || null),
         date: meal.date,
         meal_type: meal.meal_type || "breakfast",
         name: meal.name,

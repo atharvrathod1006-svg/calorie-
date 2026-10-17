@@ -25,6 +25,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   // Check Supabase cloud database status
   await updateSupabaseStatusIndicator();
+  await initSupabaseAuth();
 
   // Load saved form data or run default calculation
   loadSavedFormData();
@@ -2095,6 +2096,275 @@ window.navGeneratePdf = function() {
   }
 };
 
+// -------------------------------------------------------------
+// Supabase Email Authentication & Session Management
+// -------------------------------------------------------------
+let currentAuthTab = "signin";
+
+async function initSupabaseAuth() {
+  const service = window.SupabaseService || (typeof SupabaseService !== "undefined" ? SupabaseService : null);
+  if (!service || !service.isConfigured()) {
+    updateUserAuthUI();
+    return;
+  }
+
+  // Check existing session
+  try {
+    const user = await service.getCurrentUser();
+    if (user) {
+      currentUser = user;
+    }
+  } catch (e) {
+    console.warn("Could not check current user:", e);
+  }
+
+  updateUserAuthUI();
+
+  // Listen for login/logout state changes
+  service.onAuthStateChange(async (event, session) => {
+    if (session && session.user) {
+      currentUser = await service.getCurrentUser();
+      updateUserAuthUI();
+      await loadMeals();
+      if (typeof loadHistory === "function" && currentHistoryPeriod) {
+        await loadHistory(currentHistoryPeriod);
+      }
+    } else if (event === "SIGNED_OUT") {
+      currentUser = null;
+      updateUserAuthUI();
+      await loadMeals();
+      if (typeof loadHistory === "function" && currentHistoryPeriod) {
+        await loadHistory(currentHistoryPeriod);
+      }
+    }
+  });
+}
+
+function updateUserAuthUI() {
+  const signInBtn = document.getElementById("authSignInBtn");
+  const userWidget = document.getElementById("userProfileWidget");
+  const userNameSpan = document.getElementById("userNameSpan");
+  const userDropdownName = document.getElementById("userDropdownName");
+  const userDropdownEmail = document.getElementById("userDropdownEmail");
+  const userAvatarText = document.getElementById("userAvatarText");
+
+  if (currentUser) {
+    if (signInBtn) signInBtn.classList.add("hidden");
+    if (userWidget) userWidget.classList.remove("hidden");
+
+    const displayName = currentUser.name || currentUser.email.split("@")[0] || "User";
+    const initial = (displayName.charAt(0) || "U").toUpperCase();
+
+    if (userNameSpan) userNameSpan.textContent = displayName.split(" ")[0];
+    if (userDropdownName) userDropdownName.textContent = displayName;
+    if (userDropdownEmail) userDropdownEmail.textContent = currentUser.email;
+    if (userAvatarText) userAvatarText.textContent = initial;
+  } else {
+    if (signInBtn) signInBtn.classList.remove("hidden");
+    if (userWidget) userWidget.classList.add("hidden");
+  }
+}
+
+window.openAuthModal = function(tab = "signin") {
+  const modal = document.getElementById("emailAuthModal");
+  if (!modal) return;
+
+  const service = window.SupabaseService || (typeof SupabaseService !== "undefined" ? SupabaseService : null);
+  if (!service || !service.isConfigured()) {
+    alert("Please connect to your Supabase project first using the 'Supabase' button on the navbar.");
+    openSupabaseModal();
+    return;
+  }
+
+  modal.classList.remove("hidden");
+  switchAuthTab(tab);
+};
+
+window.closeAuthModal = function() {
+  const modal = document.getElementById("emailAuthModal");
+  if (modal) modal.classList.add("hidden");
+  const alertBox = document.getElementById("authAlertBanner");
+  if (alertBox) alertBox.classList.add("hidden");
+};
+
+window.switchAuthTab = function(tab) {
+  currentAuthTab = tab;
+  const isSignIn = tab === "signin";
+
+  const tabIn = document.getElementById("authTabSignIn");
+  const tabUp = document.getElementById("authTabSignUp");
+  const nameField = document.getElementById("authNameField");
+  const forgotBtn = document.getElementById("authForgotBtn");
+  const submitText = document.getElementById("authSubmitBtnText");
+  const modalTitle = document.getElementById("authModalTitle");
+  const modalSub = document.getElementById("authModalSubtitle");
+  const alertBox = document.getElementById("authAlertBanner");
+
+  if (alertBox) alertBox.classList.add("hidden");
+
+  if (isSignIn) {
+    if (tabIn) tabIn.className = "py-2 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm transition-all text-center";
+    if (tabUp) tabUp.className = "py-2 rounded-lg text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-all text-center";
+    if (nameField) nameField.classList.add("hidden");
+    if (forgotBtn) forgotBtn.classList.remove("hidden");
+    if (submitText) submitText.textContent = "Sign In";
+    if (modalTitle) modalTitle.textContent = "Welcome Back";
+    if (modalSub) modalSub.textContent = "Sign in to access your nutritional targets and meals.";
+  } else {
+    if (tabIn) tabIn.className = "py-2 rounded-lg text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-all text-center";
+    if (tabUp) tabUp.className = "py-2 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm transition-all text-center";
+    if (nameField) nameField.classList.remove("hidden");
+    if (forgotBtn) forgotBtn.classList.add("hidden");
+    if (submitText) submitText.textContent = "Create Account";
+    if (modalTitle) modalTitle.textContent = "Create an Account";
+    if (modalSub) modalSub.textContent = "Register with your email to store your meals privately in Supabase.";
+  }
+};
+
+window.handleEmailAuthSubmit = async function(event) {
+  if (event) event.preventDefault();
+
+  const service = window.SupabaseService || (typeof SupabaseService !== "undefined" ? SupabaseService : null);
+  if (!service || !service.isConfigured()) {
+    alert("Please connect to your Supabase project first.");
+    return;
+  }
+
+  const emailInput = document.getElementById("authEmailInput");
+  const passInput = document.getElementById("authPasswordInput");
+  const nameInput = document.getElementById("authFullNameInput");
+  const alertBox = document.getElementById("authAlertBanner");
+  const alertMsg = document.getElementById("authAlertMessage");
+  const submitBtn = document.getElementById("authSubmitBtn");
+  const submitText = document.getElementById("authSubmitBtnText");
+
+  const email = emailInput ? emailInput.value.trim() : "";
+  const password = passInput ? passInput.value.trim() : "";
+  const fullName = nameInput ? nameInput.value.trim() : "";
+
+  if (!email || !password) {
+    if (alertBox && alertMsg) {
+      alertMsg.textContent = "Please fill in all required fields.";
+      alertBox.className = "p-3 rounded-xl text-xs font-semibold bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-800";
+      alertBox.classList.remove("hidden");
+    }
+    return;
+  }
+
+  if (submitBtn) submitBtn.disabled = true;
+  if (submitText) submitText.textContent = currentAuthTab === "signin" ? "Signing In..." : "Creating Account...";
+
+  try {
+    if (currentAuthTab === "signin") {
+      const res = await service.signInWithEmail(email, password);
+      if (res && res.user) {
+        if (alertBox && alertMsg) {
+          alertMsg.textContent = "✓ Signed in successfully!";
+          alertBox.className = "p-3 rounded-xl text-xs font-semibold bg-emerald-50 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800";
+          alertBox.classList.remove("hidden");
+        }
+        currentUser = await service.getCurrentUser();
+        updateUserAuthUI();
+        setTimeout(() => {
+          closeAuthModal();
+        }, 1000);
+      }
+    } else {
+      const res = await service.signUpWithEmail(email, password, fullName);
+      if (res) {
+        if (alertBox && alertMsg) {
+          if (res.session) {
+            alertMsg.textContent = "✓ Account created & signed in successfully!";
+            alertBox.className = "p-3 rounded-xl text-xs font-semibold bg-emerald-50 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800";
+            alertBox.classList.remove("hidden");
+            currentUser = await service.getCurrentUser();
+            updateUserAuthUI();
+            setTimeout(() => {
+              closeAuthModal();
+            }, 1200);
+          } else {
+            // Email confirmation is required by Supabase settings
+            alertMsg.textContent = "✓ Account created! Please check your email to confirm your account, then sign in.";
+            alertBox.className = "p-3 rounded-xl text-xs font-semibold bg-blue-50 dark:bg-blue-950/40 text-blue-800 dark:text-blue-300 border border-blue-200 dark:border-blue-800";
+            alertBox.classList.remove("hidden");
+            setTimeout(() => {
+              switchAuthTab("signin");
+            }, 3000);
+          }
+        }
+      }
+    }
+  } catch (err) {
+    if (alertBox && alertMsg) {
+      alertMsg.textContent = err.message || "Authentication error occurred.";
+      alertBox.className = "p-3 rounded-xl text-xs font-semibold bg-red-50 dark:bg-red-950/40 text-red-800 dark:text-red-300 border border-red-200 dark:border-red-800";
+      alertBox.classList.remove("hidden");
+    }
+  } finally {
+    if (submitBtn) submitBtn.disabled = false;
+    if (submitText) submitText.textContent = currentAuthTab === "signin" ? "Sign In" : "Create Account";
+  }
+};
+
+window.handleForgotPassword = async function() {
+  const emailInput = document.getElementById("authEmailInput");
+  const email = emailInput ? emailInput.value.trim() : "";
+  const alertBox = document.getElementById("authAlertBanner");
+  const alertMsg = document.getElementById("authAlertMessage");
+
+  if (!email) {
+    if (alertBox && alertMsg) {
+      alertMsg.textContent = "Please enter your email address above to receive a password reset link.";
+      alertBox.className = "p-3 rounded-xl text-xs font-semibold bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-800";
+      alertBox.classList.remove("hidden");
+    }
+    emailInput?.focus();
+    return;
+  }
+
+  const service = window.SupabaseService || (typeof SupabaseService !== "undefined" ? SupabaseService : null);
+  try {
+    await service.resetPassword(email);
+    if (alertBox && alertMsg) {
+      alertMsg.textContent = `✓ Password reset link sent to ${email}!`;
+      alertBox.className = "p-3 rounded-xl text-xs font-semibold bg-blue-50 dark:bg-blue-950/40 text-blue-800 dark:text-blue-300 border border-blue-200 dark:border-blue-800";
+      alertBox.classList.remove("hidden");
+    }
+  } catch (err) {
+    if (alertBox && alertMsg) {
+      alertMsg.textContent = err.message;
+      alertBox.className = "p-3 rounded-xl text-xs font-semibold bg-red-50 dark:bg-red-950/40 text-red-800 dark:text-red-300 border border-red-200 dark:border-red-800";
+      alertBox.classList.remove("hidden");
+    }
+  }
+};
+
+window.handleSignOut = async function() {
+  const service = window.SupabaseService || (typeof SupabaseService !== "undefined" ? SupabaseService : null);
+  if (service) {
+    await service.signOut();
+  }
+  currentUser = null;
+  updateUserAuthUI();
+  const dropdown = document.getElementById("userDropdownMenu");
+  if (dropdown) dropdown.classList.add("hidden");
+
+  const toast = document.getElementById("calcSuccessToast");
+  const toastMsg = document.getElementById("calcToastMessage");
+  if (toast && toastMsg) {
+    toastMsg.textContent = "Signed out of your account.";
+    toast.className = "p-3 rounded-xl bg-slate-700 text-white text-xs font-bold shadow-md flex items-center justify-between";
+    toast.classList.remove("hidden");
+    setTimeout(() => toast.classList.add("hidden"), 2500);
+  }
+};
+
+window.toggleUserDropdown = function(event) {
+  if (event) event.stopPropagation();
+  const menu = document.getElementById("userDropdownMenu");
+  if (menu) menu.classList.toggle("hidden");
+};
+
 // Global click-outside listener to close dropdowns smoothly
 document.addEventListener("click", function(event) {
   const navDropdown = document.getElementById("navHistoryDropdownMenu");
@@ -2104,7 +2374,16 @@ document.addEventListener("click", function(event) {
       navDropdown.classList.add("hidden");
     }
   }
+
+  const userDropdown = document.getElementById("userDropdownMenu");
+  const userWidget = document.getElementById("userProfileWidget");
+  if (userDropdown && !userDropdown.classList.contains("hidden")) {
+    if (userWidget && !userWidget.contains(event.target)) {
+      userDropdown.classList.add("hidden");
+    }
+  }
 });
+
 
 
 
