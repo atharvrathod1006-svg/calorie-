@@ -4,6 +4,20 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>NutriGlance Calorie Tracker | Advanced Metabolic & Macro Calculator</title>
+  <meta name="description" content="Calculate your daily calorie needs, BMR, TDEE, and optimal macronutrient splits with NutriGlance. Track meals, log nutrition in grams, and sync data securely with Supabase.">
+  <meta name="keywords" content="calorie calculator, TDEE calculator, BMR calculator, macro tracker, meal log, nutrition tracker, Mifflin-St Jeor">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🔥</text></svg>">
+
+  <!-- Open Graph / Facebook / WhatsApp -->
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="NutriGlance Calorie Tracker | Precision Nutrition Engine">
+  <meta property="og:description" content="Calculate your scientific calorie targets, BMR, TDEE, and macro splits. Log meals by grams with offline resilience and Supabase cloud sync.">
+  <meta property="og:site_name" content="NutriGlance">
+
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="NutriGlance Calorie Tracker">
+  <meta name="twitter:description" content="Precision metabolic calorie calculator and itemized meal tracker with client-side computation and cloud sync.">
   
   <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -102,8 +116,8 @@
                   U
                 </div>
                 <div class="min-w-0 flex-1">
-                  <p class="font-bold text-slate-900 dark:text-white truncate" id="userDropdownName">User Name</p>
-                  <p class="text-[11px] text-slate-500 dark:text-slate-400 truncate" id="userDropdownEmail">user@example.com</p>
+                  <p class="font-bold text-slate-900 dark:text-white truncate" id="userDropdownName">Guest User</p>
+                  <p class="text-[11px] text-slate-500 dark:text-slate-400 truncate" id="userDropdownEmail">Local Offline Mode</p>
                 </div>
               </div>
             </div>
@@ -203,9 +217,9 @@
               </button>
 
               <button type="button" onclick="openSupabaseModal(); closeUserDropdown();" class="w-full text-left px-3.5 py-2 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 text-slate-700 dark:text-slate-200 flex items-center gap-2 transition-colors">
-                <span class="w-6 h-6 rounded-lg bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 flex items-center justify-center text-xs">⚡</span>
+                <span class="w-6 h-6 rounded-lg bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 flex items-center justify-center text-xs">⚙️</span>
                 <div>
-                  <p class="font-semibold text-slate-800 dark:text-slate-200">Supabase Settings</p>
+                  <p class="font-semibold text-slate-800 dark:text-slate-200">Cloud Sync Settings</p>
                   <p class="text-[10px] text-slate-400">Connect or test database</p>
                 </div>
               </button>
@@ -221,15 +235,6 @@
 
           </div>
         </div>
-
-        <!-- Supabase Cloud Connection & Settings Button -->
-        <button id="supabaseConfigBtn" onclick="openSupabaseModal()" class="flex items-center gap-1 sm:gap-1.5 px-2 sm:px-2.5 py-1.5 rounded-xl border border-emerald-200 dark:border-emerald-800/80 bg-emerald-50/90 dark:bg-emerald-950/50 hover:bg-emerald-100 dark:hover:bg-emerald-900/60 text-emerald-700 dark:text-emerald-300 text-xs font-bold shadow-sm transition-all" title="Connect to your Supabase Project">
-          <svg class="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M21.362 9.354H12V.396a.396.396 0 0 0-.716-.233L.117 14.167a.396.396 0 0 0 .313.633h9.362v8.958a.396.396 0 0 0 .716.233l11.167-14.004a.396.396 0 0 0-.313-.633z"/>
-          </svg>
-          <span id="supabaseStatusText" class="inline">Supabase</span>
-          <span id="supabaseStatusDot" class="w-2 h-2 rounded-full bg-slate-400 shrink-0"></span>
-        </button>
 
         <!-- Print Summary Button (Desktop / Tablet) -->
         <button id="printReportBtn" class="hidden sm:flex p-2 rounded-xl text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 transition-all" title="Print or Save PDF Summary">
@@ -260,7 +265,7 @@
         NutriGlance Calorie Tracker
       </h1>
       <p class="text-sm sm:text-base text-slate-600 dark:text-slate-400 mt-1">
-        Calculate your clinical BMR, Total Daily Energy Expenditure (TDEE), optimal macro splits, and log daily meals by exact grams.
+        Calculate your estimated BMR, Total Daily Energy Expenditure (TDEE), optimal macro splits, and log daily meals by exact grams.
       </p>
     </div>
 
@@ -288,7 +293,20 @@
               </svg>
               Your Body Metrics
             </h2>
-            <span class="text-xs text-slate-400">⚡ 0ms Real-Time</span>
+            <span class="text-xs text-slate-400">⚡ Instant Calculation Engine</span>
+          </div>
+
+          <!-- Measurement Unit Toggle (Metric vs Imperial) -->
+          <div class="flex items-center justify-between p-1 rounded-xl bg-slate-100 dark:bg-slate-800">
+            <span class="text-xs font-semibold px-2 text-slate-600 dark:text-slate-400">Measurement Units:</span>
+            <div class="flex items-center gap-1">
+              <button type="button" id="unitMetricBtn" onclick="setUnitSystem('metric')" class="px-2.5 py-1 rounded-lg text-xs font-bold transition-all bg-blue-600 text-white shadow-sm">
+                Metric (kg, cm)
+              </button>
+              <button type="button" id="unitImperialBtn" onclick="setUnitSystem('imperial')" class="px-2.5 py-1 rounded-lg text-xs font-bold transition-all text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white">
+                Imperial (lbs, ft/in)
+              </button>
+            </div>
           </div>
 
           <!-- 1-Click Fast Presets -->
@@ -366,12 +384,24 @@
               </div>
             </div>
 
-            <!-- Height (cm) -->
+            <!-- Height (cm or ft/in) -->
             <div>
-              <label for="heightCmInput" class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Height</label>
+              <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Height</label>
+              <!-- Metric Height -->
               <div id="metricHeightContainer" class="relative">
-                <input type="number" id="heightCmInput" value="175" class="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none">
+                <input type="number" id="heightCmInput" value="175" min="50" max="280" class="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none">
                 <span class="absolute right-3 top-2.5 text-xs text-slate-400">cm</span>
+              </div>
+              <!-- Imperial Height (Feet & Inches) -->
+              <div id="imperialHeightContainer" class="hidden grid grid-cols-2 gap-2">
+                <div class="relative">
+                  <input type="number" id="heightFeetInput" value="5" min="1" max="8" class="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none">
+                  <span class="absolute right-3 top-2.5 text-xs text-slate-400">ft</span>
+                </div>
+                <div class="relative">
+                  <input type="number" id="heightInchesInput" value="9" min="0" max="11" class="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none">
+                  <span class="absolute right-3 top-2.5 text-xs text-slate-400">in</span>
+                </div>
               </div>
             </div>
 
@@ -425,16 +455,16 @@
             <!-- Advanced Scientific Options Accordion -->
             <details class="group rounded-xl border border-slate-200 dark:border-slate-800 p-3 text-xs">
               <summary class="font-semibold text-slate-700 dark:text-slate-300 cursor-pointer flex items-center justify-between list-none">
-                <span>⚙️ Advanced Formula & Body Fat Settings</span>
+                <span>⚙️ Advanced Formula & Body Fat % Settings</span>
                 <span class="group-open:rotate-180 transition-transform">▼</span>
               </summary>
               <div class="mt-3 pt-3 border-t border-slate-100 dark:border-slate-800 space-y-3">
                 <div>
                   <label for="formulaSelect" class="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">BMR Calculation Formula</label>
                   <select id="formulaSelect" class="w-full px-2.5 py-1.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-xs">
-                    <option value="mifflin" selected>Mifflin-St Jeor (ADA Gold Standard)</option>
-                    <option value="harris">Revised Harris-Benedict (1984)</option>
-                    <option value="katch">Katch-McArdle (Lean Body Mass formula)</option>
+                    <option value="mifflin" selected>Mifflin-St Jeor (Validated Standard Formula)</option>
+                    <option value="harris">Revised Harris-Benedict (Classic Formula)</option>
+                    <option value="katch">Katch-McArdle (Requires Body Fat %)</option>
                   </select>
                 </div>
                 <div id="bodyFatContainer" class="hidden">
@@ -477,7 +507,7 @@
             <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
             <span id="calcToastMessage">Calories calculated successfully!</span>
           </div>
-          <span class="text-[11px] opacity-80">Updated just now</span>
+          <span class="text-[11px] opacity-80" id="calcToastTime"></span>
         </div>
 
         <!-- Hero Metrics Dashboard -->
@@ -490,14 +520,14 @@
               <div>
                 <span class="text-xs font-semibold tracking-wider uppercase text-blue-200">Recommended Daily Caloric Intake</span>
                 <div class="flex items-baseline gap-2 mt-1">
-                  <span id="targetCaloriesVal" class="text-4xl sm:text-5xl font-extrabold tracking-tight">2,150</span>
+                  <span id="targetCaloriesVal" class="text-4xl sm:text-5xl font-extrabold tracking-tight">--</span>
                   <span class="text-base sm:text-lg font-medium text-blue-200">kcal / day</span>
                 </div>
               </div>
               <div class="text-right">
                 <span class="text-[11px] font-semibold text-blue-200 block">Daily Strategy</span>
                 <span id="dailyDeltaVal" class="text-xs sm:text-sm font-bold bg-white/20 px-2.5 py-1 rounded-full inline-block mt-1">
-                  -500 kcal (Deficit)
+                  --
                 </span>
               </div>
             </div>
@@ -507,7 +537,7 @@
           <div class="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm">
             <span class="text-xs text-slate-500 dark:text-slate-400 font-medium block">Basal Metabolic Rate</span>
             <div class="flex items-baseline gap-1 mt-1">
-              <span id="bmrVal" class="text-2xl font-bold text-slate-900 dark:text-white">1,680</span>
+              <span id="bmrVal" class="text-2xl font-bold text-slate-900 dark:text-white">--</span>
               <span class="text-xs text-slate-400">kcal</span>
             </div>
             <span class="text-[11px] text-slate-400 mt-1 block">Calories burned at absolute rest</span>
@@ -517,7 +547,7 @@
           <div class="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm">
             <span class="text-xs text-slate-500 dark:text-slate-400 font-medium block">Maintenance (TDEE)</span>
             <div class="flex items-baseline gap-1 mt-1">
-              <span id="tdeeVal" class="text-2xl font-bold text-slate-900 dark:text-white">2,650</span>
+              <span id="tdeeVal" class="text-2xl font-bold text-slate-900 dark:text-white">--</span>
               <span class="text-xs text-slate-400">kcal</span>
             </div>
             <span class="text-[11px] text-slate-400 mt-1 block">Total burn including activity</span>
@@ -527,10 +557,10 @@
           <div class="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm">
             <div class="flex items-center justify-between">
               <span class="text-xs text-slate-500 dark:text-slate-400 font-medium">Body Mass Index</span>
-              <span id="bmiBadge" class="text-xs px-2 py-0.5 rounded font-semibold bg-emerald-100 text-emerald-800">Normal</span>
+              <span id="bmiBadge" class="text-xs px-2 py-0.5 rounded font-semibold bg-blue-100 text-blue-800">--</span>
             </div>
             <div class="flex items-baseline gap-1 mt-1">
-              <span id="bmiVal" class="text-2xl font-bold text-slate-900 dark:text-white">22.9</span>
+              <span id="bmiVal" class="text-2xl font-bold text-slate-900 dark:text-white">--</span>
               <span class="text-xs text-slate-400">BMI</span>
             </div>
             <span class="text-[11px] text-slate-400 mt-1 block">WHO Classification index</span>
@@ -538,7 +568,7 @@
 
         </div>
 
-        <!-- Clinical Safety & Advisory Alerts Container -->
+        <!-- Health Intelligence & Advisory Alerts Container -->
         <div id="safetyAlertsContainer"></div>
 
         <!-- Goal Timeline Card (Visible when Target Weight is set) -->
@@ -594,9 +624,9 @@
             <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
               <div>
                 <div class="flex justify-between mb-1">
-                  <span>Carbs: <strong id="customCarbsVal">40%</strong></span>
+                  <span>Carbs: <strong id="customCarbsVal">45%</strong></span>
                 </div>
-                <input type="range" id="customCarbsSlider" min="0" max="80" value="40" class="w-full accent-blue-600">
+                <input type="range" id="customCarbsSlider" min="0" max="80" value="45" class="w-full accent-blue-600">
               </div>
               <div>
                 <div class="flex justify-between mb-1">
@@ -606,9 +636,9 @@
               </div>
               <div>
                 <div class="flex justify-between mb-1">
-                  <span>Fat: <strong id="customFatVal">30%</strong></span>
+                  <span>Fat: <strong id="customFatVal">25%</strong></span>
                 </div>
-                <input type="range" id="customFatSlider" min="10" max="80" value="30" class="w-full accent-amber-500">
+                <input type="range" id="customFatSlider" min="10" max="80" value="25" class="w-full accent-amber-500">
               </div>
             </div>
           </div>
@@ -640,8 +670,8 @@
                   </div>
                 </div>
                 <div class="text-right">
-                  <span id="macroCarbsGrams" class="text-sm font-extrabold text-blue-600 dark:text-blue-400">242g</span>
-                  <span id="macroCarbsCals" class="text-[11px] text-slate-400 block">968 kcal</span>
+                  <span id="macroCarbsGrams" class="text-sm font-extrabold text-blue-600 dark:text-blue-400">--g</span>
+                  <span id="macroCarbsCals" class="text-[11px] text-slate-400 block">-- kcal</span>
                 </div>
               </div>
 
@@ -653,13 +683,13 @@
                     <h5 class="text-xs font-bold text-slate-900 dark:text-white">Protein</h5>
                     <div class="flex items-center gap-2">
                       <span id="macroProteinPct" class="text-[11px] text-slate-500 dark:text-slate-400">30%</span>
-                      <span id="macroProteinPerKg" class="text-[10px] px-1.5 py-0.2 rounded bg-red-100 dark:bg-red-900/50 text-red-700 dark:text-red-300 font-semibold">2.0 g/kg</span>
+                      <span id="macroProteinPerKg" class="text-[10px] px-1.5 py-0.2 rounded bg-red-100 dark:bg-red-900/50 text-red-700 dark:text-red-300 font-semibold">-- g/kg</span>
                     </div>
                   </div>
                 </div>
                 <div class="text-right">
-                  <span id="macroProteinGrams" class="text-sm font-extrabold text-red-600 dark:text-red-400">161g</span>
-                  <span id="macroProteinCals" class="text-[11px] text-slate-400 block">645 kcal</span>
+                  <span id="macroProteinGrams" class="text-sm font-extrabold text-red-600 dark:text-red-400">--g</span>
+                  <span id="macroProteinCals" class="text-[11px] text-slate-400 block">-- kcal</span>
                 </div>
               </div>
 
@@ -673,8 +703,8 @@
                   </div>
                 </div>
                 <div class="text-right">
-                  <span id="macroFatGrams" class="text-sm font-extrabold text-amber-600 dark:text-amber-400">60g</span>
-                  <span id="macroFatCals" class="text-[11px] text-slate-400 block">538 kcal</span>
+                  <span id="macroFatGrams" class="text-sm font-extrabold text-amber-600 dark:text-amber-400">--g</span>
+                  <span id="macroFatCals" class="text-[11px] text-slate-400 block">-- kcal</span>
                 </div>
               </div>
 
@@ -790,10 +820,10 @@
             <strong id="trackerConsumedVal" class="text-slate-900 dark:text-white">0 kcal</strong>
             <span class="text-slate-400 mx-1">/</span>
             <span class="text-slate-500 dark:text-slate-400">Target: </span>
-            <strong id="trackerTargetVal" class="text-slate-900 dark:text-white">2,150 kcal</strong>
+            <strong id="trackerTargetVal" class="text-slate-900 dark:text-white">-- kcal</strong>
           </div>
           <div id="trackerRemainingVal">
-            <span class="text-emerald-600 dark:text-emerald-400 font-bold">2,150 kcal remaining</span>
+            <span class="text-emerald-600 dark:text-emerald-400 font-bold">-- kcal remaining</span>
           </div>
         </div>
 
@@ -837,9 +867,46 @@
             <button class="food-cat-btn shrink-0 px-2.5 py-1 rounded-lg text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 font-medium transition-all" data-category="Fats">Healthy Fats</button>
           </div>
 
-          <!-- Search Results Scrollable List -->
+          <!-- Search Results Scrollable List (With Instant Pre-rendered Staples) -->
           <div id="foodSearchResults" class="space-y-2 max-h-72 overflow-y-auto pr-1">
-            <!-- Populated via JS -->
+            <div class="p-3 bg-white dark:bg-slate-800/80 rounded-xl border border-slate-200 dark:border-slate-700/60 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+              <div class="min-w-0 flex-1">
+                <div class="flex items-center gap-1.5 flex-wrap">
+                  <h5 class="text-xs font-semibold text-slate-900 dark:text-white">Paneer (Indian Cottage Cheese)</h5>
+                  <span class="text-[10px] px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300">Protein</span>
+                  <span class="text-[10px] px-1.5 py-0.5 rounded bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 font-bold border border-emerald-200 dark:border-emerald-800">🌱 Veg</span>
+                </div>
+                <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">100g • <strong class="text-blue-600 dark:text-blue-400">265 kcal</strong> (P: 18.3g | C: 1.2g | F: 20.8g)</p>
+              </div>
+              <div class="flex items-center gap-1.5 self-end sm:self-center shrink-0">
+                <button onclick="addFoodToMeal('v1')" class="px-2.5 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-semibold transition-all shadow-sm cursor-pointer">+ Add</button>
+              </div>
+            </div>
+            <div class="p-3 bg-white dark:bg-slate-800/80 rounded-xl border border-slate-200 dark:border-slate-700/60 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+              <div class="min-w-0 flex-1">
+                <div class="flex items-center gap-1.5 flex-wrap">
+                  <h5 class="text-xs font-semibold text-slate-900 dark:text-white">Cooked Yellow Dal / Lentils</h5>
+                  <span class="text-[10px] px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300">Protein</span>
+                  <span class="text-[10px] px-1.5 py-0.5 rounded bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 font-bold border border-emerald-200 dark:border-emerald-800">🌱 Veg</span>
+                </div>
+                <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">100g (~1/2 cup) • <strong class="text-blue-600 dark:text-blue-400">116 kcal</strong> (P: 9.0g | C: 20.0g | F: 0.4g)</p>
+              </div>
+              <div class="flex items-center gap-1.5 self-end sm:self-center shrink-0">
+                <button onclick="addFoodToMeal('v5')" class="px-2.5 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-semibold transition-all shadow-sm cursor-pointer">+ Add</button>
+              </div>
+            </div>
+            <div class="p-3 bg-white dark:bg-slate-800/80 rounded-xl border border-slate-200 dark:border-slate-700/60 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+              <div class="min-w-0 flex-1">
+                <div class="flex items-center gap-1.5 flex-wrap">
+                  <h5 class="text-xs font-semibold text-slate-900 dark:text-white">Chicken Breast (Cooked, skinless)</h5>
+                  <span class="text-[10px] px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300">Protein</span>
+                </div>
+                <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">100g • <strong class="text-blue-600 dark:text-blue-400">165 kcal</strong> (P: 31.0g | C: 0.0g | F: 3.6g)</p>
+              </div>
+              <div class="flex items-center gap-1.5 self-end sm:self-center shrink-0">
+                <button onclick="addFoodToMeal('p1')" class="px-2.5 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-semibold transition-all shadow-sm cursor-pointer">+ Add</button>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -1055,7 +1122,7 @@
             <span id="historyTotalCalories" class="text-xl sm:text-2xl font-black text-slate-900 dark:text-white">--</span>
             <span class="text-xs text-slate-500">kcal</span>
           </div>
-          <span id="historyDaysLoggedSub" class="text-[10px] text-slate-400 mt-1 block">In 7 recorded days</span>
+          <span id="historyDaysLoggedSub" class="text-[10px] text-slate-400 mt-1 block">No recorded days</span>
         </div>
 
         <!-- 2. Daily Average Calories -->
@@ -1065,7 +1132,7 @@
             <span id="historyDailyAvgCalories" class="text-xl sm:text-2xl font-black text-blue-700 dark:text-blue-300">--</span>
             <span class="text-xs text-blue-600 dark:text-blue-400">kcal/day</span>
           </div>
-          <span id="historyTargetComparisonSub" class="text-[10px] text-blue-500 mt-1 block">vs 2,150 kcal Target</span>
+          <span id="historyTargetComparisonSub" class="text-[10px] text-blue-500 mt-1 block">Target from calculator</span>
         </div>
 
         <!-- 3. Energy Balance / Deficit -->
@@ -1075,7 +1142,7 @@
             <span id="historyAvgDelta" class="text-xl sm:text-2xl font-black text-emerald-600 dark:text-emerald-400">--</span>
             <span class="text-xs text-slate-500">kcal/day</span>
           </div>
-          <span id="historyPaceSub" class="text-[10px] text-slate-400 mt-1 block">Fat loss trajectory</span>
+          <span id="historyPaceSub" class="text-[10px] text-slate-400 mt-1 block">No data yet</span>
         </div>
 
         <!-- 4. Average Daily Macros -->
@@ -1092,10 +1159,10 @@
         <div class="p-4 rounded-xl bg-emerald-50/60 dark:bg-emerald-950/30 border border-emerald-200/80 dark:border-emerald-900/40 col-span-2 sm:col-span-1">
           <span class="text-[11px] font-semibold text-emerald-800 dark:text-emerald-300 block mb-1">Tracking Adherence</span>
           <div class="flex items-baseline gap-1">
-            <span id="historyAdherencePct" class="text-xl sm:text-2xl font-black text-emerald-700 dark:text-emerald-300">100%</span>
+            <span id="historyAdherencePct" class="text-xl sm:text-2xl font-black text-emerald-700 dark:text-emerald-300">--</span>
             <span class="text-xs text-emerald-600">consistency</span>
           </div>
-          <span id="historyComplianceSub" class="text-[10px] text-emerald-600 dark:text-emerald-400 mt-1 block">Active meal logger</span>
+          <span id="historyComplianceSub" class="text-[10px] text-slate-400 mt-1 block">No logged meals yet</span>
         </div>
       </div>
 
@@ -1159,10 +1226,10 @@
           <!-- Quick Health Score / Advisory -->
           <div class="p-3 bg-white dark:bg-slate-800 rounded-xl border border-slate-200/80 dark:border-slate-700/60 text-xs space-y-1">
             <span class="font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
-              <span>🩺 Clinical Intake Quality</span>
+              <span>🥗 Nutritional Balance Audit</span>
             </span>
             <p id="historyAdvisoryText" class="text-[11px] text-slate-500 dark:text-slate-400">
-              Average intake is aligned with physiological metabolic requirements.
+              No data yet. Log meals in the Meal Tracker to generate intake insights.
             </p>
           </div>
         </div>
@@ -1192,7 +1259,7 @@
       <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs text-slate-600 dark:text-slate-400">
         <div class="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-700/50">
           <h4 class="font-bold text-slate-900 dark:text-white mb-1">Mifflin-St Jeor Equation</h4>
-          <p>Adopted by the American Dietetic Association as the most clinically accurate formula for healthy adults:</p>
+          <p>Widely recognized by dietitians and researchers as a reliable formula for healthy adults:</p>
           <p class="mt-1 font-mono text-[11px] text-blue-600 dark:text-blue-400">10 × W(kg) + 6.25 × H(cm) - 5 × Age ± Gender Constant</p>
         </div>
         <div class="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-700/50">
@@ -1212,9 +1279,11 @@
   <!-- ============================================================ -->
   <!-- Footer                                                       -->
   <!-- ============================================================ -->
-  <footer class="mt-12 py-6 border-t border-slate-200 dark:border-slate-800 text-center text-xs text-slate-400">
-    <p>NutriGlance Calorie Tracker • Developed with Python Flask REST API & Modern Responsive Web Architecture</p>
-    <p class="mt-1 text-[11px]">Disclaimer: For nutritional and educational planning purposes. Consult a licensed healthcare professional for personalized medical advice.</p>
+  <footer class="mt-12 py-6 border-t border-slate-200 dark:border-slate-800 text-center text-xs text-slate-400 space-y-1.5">
+    <p class="font-semibold text-slate-600 dark:text-slate-400">NutriGlance Calorie Tracker • Fast Client-Side Scientific Engine & Supabase Cloud Sync</p>
+    <p class="text-[11px] text-slate-400">Privacy First: Your biometric and meal tracking data is stored locally in your browser's localStorage and synced to your private Supabase database when signed in. No tracking cookies or advertising pixels.</p>
+    <p class="text-[11px] text-slate-400">Disclaimer: For nutritional and educational planning purposes. Consult a licensed healthcare professional for personalized medical advice.</p>
+    <p class="pt-1"><button type="button" onclick="openSupabaseModal()" class="text-blue-500 hover:text-blue-600 dark:text-blue-400 hover:underline inline-flex items-center gap-1 font-medium text-[11px]">⚙️ Cloud Sync & Database Settings</button></p>
   </footer>
 
   <!-- ============================================================ -->

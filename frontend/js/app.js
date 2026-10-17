@@ -12,6 +12,85 @@ let customHistoryStartDate = "";
 let customHistoryEndDate = "";
 let currentHistoryData = null;
 let currentUser = null;
+let currentUnitSystem = "metric";
+
+// Time of day helper to default meal category logically
+function getDefaultMealCategory() {
+  const hour = new Date().getHours();
+  if (hour >= 5 && hour < 11) return "breakfast";
+  if (hour >= 11 && hour < 16) return "lunch";
+  if (hour >= 16 && hour < 19) return "snacks";
+  return "dinner";
+}
+window.getDefaultMealCategory = getDefaultMealCategory;
+
+function setUnitSystem(unit) {
+  if (unit === currentUnitSystem) return;
+  const oldUnit = currentUnitSystem;
+  currentUnitSystem = unit;
+
+  const metricBtn = document.getElementById("unitMetricBtn");
+  const imperialBtn = document.getElementById("unitImperialBtn");
+  const metricHeight = document.getElementById("metricHeightContainer");
+  const imperialHeight = document.getElementById("imperialHeightContainer");
+  const weightLabel = document.getElementById("weightUnitLabel");
+  const targetWeightLabel = document.getElementById("targetWeightUnitLabel");
+
+  const weightInput = document.getElementById("weightInput");
+  const targetWeightInput = document.getElementById("targetWeightInput");
+  const heightCmInput = document.getElementById("heightCmInput");
+  const heightFeetInput = document.getElementById("heightFeetInput");
+  const heightInchesInput = document.getElementById("heightInchesInput");
+
+  if (unit === "imperial") {
+    if (metricBtn) { metricBtn.className = "px-2.5 py-1 rounded-lg text-xs font-bold transition-all text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white"; }
+    if (imperialBtn) { imperialBtn.className = "px-2.5 py-1 rounded-lg text-xs font-bold transition-all bg-blue-600 text-white shadow-sm"; }
+    if (metricHeight) metricHeight.classList.add("hidden");
+    if (imperialHeight) imperialHeight.classList.remove("hidden");
+    if (weightLabel) weightLabel.textContent = "lbs";
+    if (targetWeightLabel) targetWeightLabel.textContent = "lbs";
+
+    // Convert values from metric to imperial
+    if (weightInput && weightInput.value) {
+      weightInput.value = Math.round(parseFloat(weightInput.value) * 2.20462);
+    }
+    if (targetWeightInput && targetWeightInput.value) {
+      targetWeightInput.value = Math.round(parseFloat(targetWeightInput.value) * 2.20462);
+    }
+    if (heightCmInput && heightCmInput.value) {
+      const totalIn = Math.round(parseFloat(heightCmInput.value) / 2.54);
+      const ft = Math.floor(totalIn / 12);
+      const inRem = totalIn % 12;
+      if (heightFeetInput) heightFeetInput.value = ft;
+      if (heightInchesInput) heightInchesInput.value = inRem;
+    }
+  } else {
+    if (metricBtn) { metricBtn.className = "px-2.5 py-1 rounded-lg text-xs font-bold transition-all bg-blue-600 text-white shadow-sm"; }
+    if (imperialBtn) { imperialBtn.className = "px-2.5 py-1 rounded-lg text-xs font-bold transition-all text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white"; }
+    if (metricHeight) metricHeight.classList.remove("hidden");
+    if (imperialHeight) imperialHeight.classList.add("hidden");
+    if (weightLabel) weightLabel.textContent = "kg";
+    if (targetWeightLabel) targetWeightLabel.textContent = "kg";
+
+    // Convert values from imperial to metric
+    if (weightInput && weightInput.value) {
+      weightInput.value = Math.round((parseFloat(weightInput.value) / 2.20462) * 10) / 10;
+    }
+    if (targetWeightInput && targetWeightInput.value) {
+      targetWeightInput.value = Math.round((parseFloat(targetWeightInput.value) / 2.20462) * 10) / 10;
+    }
+    if (heightFeetInput && heightInchesInput) {
+      const ft = parseInt(heightFeetInput.value || 5);
+      const inRem = parseInt(heightInchesInput.value || 9);
+      const cm = Math.round(((ft * 12) + inRem) * 2.54);
+      if (heightCmInput) heightCmInput.value = cm;
+    }
+  }
+
+  saveFormData();
+  calculateAndRender(false);
+}
+window.setUnitSystem = setUnitSystem;
 
 // DOM Elements
 document.addEventListener("DOMContentLoaded", async () => {
@@ -448,11 +527,19 @@ function calculateAndRender(forceAnimate = false) {
 function collectFormData() {
   const gender = document.querySelector("input[name='gender']:checked")?.value || "male";
   const age = parseInt(document.getElementById("ageInput")?.value || 25);
-  const unit_system = "metric";
+  const unit_system = currentUnitSystem || "metric";
 
   const weight = parseFloat(document.getElementById("weightInput")?.value || 70);
-  const heightCm = parseFloat(document.getElementById("heightCmInput")?.value || 175);
   const targetWeight = document.getElementById("targetWeightInput")?.value || null;
+
+  let height = 175;
+  let height_inches = 0;
+  if (unit_system === "imperial") {
+    height = parseFloat(document.getElementById("heightFeetInput")?.value || 5);
+    height_inches = parseFloat(document.getElementById("heightInchesInput")?.value || 9);
+  } else {
+    height = parseFloat(document.getElementById("heightCmInput")?.value || 175);
+  }
 
   const activity_level = document.getElementById("activitySelect")?.value || "moderate";
   const formula = document.getElementById("formulaSelect")?.value || "mifflin";
@@ -467,9 +554,9 @@ function collectFormData() {
   let custom_split = null;
   if (activeMacroPreset === "custom") {
     custom_split = {
-      carbs_pct: parseInt(document.getElementById("customCarbsSlider")?.value || 40),
+      carbs_pct: parseInt(document.getElementById("customCarbsSlider")?.value || 45),
       protein_pct: parseInt(document.getElementById("customProteinSlider")?.value || 30),
-      fat_pct: parseInt(document.getElementById("customFatSlider")?.value || 30)
+      fat_pct: parseInt(document.getElementById("customFatSlider")?.value || 25)
     };
   }
 
@@ -478,8 +565,8 @@ function collectFormData() {
     age,
     unit_system,
     weight,
-    height: heightCm,
-    height_inches: 0,
+    height,
+    height_inches,
     target_weight: targetWeight,
     activity_level,
     formula,
@@ -491,6 +578,19 @@ function collectFormData() {
 }
 
 function renderResults(data, forceAnimate = false) {
+  const errBanner = document.getElementById("formErrorBanner");
+  const errMsg = document.getElementById("formErrorMessage");
+
+  if (!data || data.error) {
+    if (errBanner && errMsg && data?.error) {
+      errMsg.textContent = data.error;
+      errBanner.classList.remove("hidden");
+    }
+    return;
+  } else if (errBanner) {
+    errBanner.classList.add("hidden");
+  }
+
   // Hero values
   animateNumber("targetCaloriesVal", data.target_calories, forceAnimate);
   animateNumber("bmrVal", data.bmr, forceAnimate);
@@ -601,10 +701,20 @@ function renderTimelineCard(timeline) {
   const messageVal = document.getElementById("timelineMessageVal");
 
   if (timeline.achievable) {
+    const isImperial = currentUnitSystem === "imperial";
     dateVal.textContent = timeline.projected_date;
     weeksVal.textContent = `${timeline.weeks_needed} weeks (${timeline.days_needed} days)`;
-    paceVal.textContent = `${timeline.weekly_rate_kg} kg/week (~${Math.round(timeline.weekly_rate_kg * 2.20462 * 10) / 10} lbs)`;
-    messageVal.textContent = `Pacing to reach ${timeline.target_weight_kg} kg from ${timeline.current_weight_kg} kg with your current daily deficit/surplus.`;
+
+    if (isImperial) {
+      const weeklyLbs = Math.round(timeline.weekly_rate_kg * 2.20462 * 10) / 10;
+      const targetLbs = Math.round(timeline.target_weight_kg * 2.20462 * 10) / 10;
+      const currentLbs = Math.round(timeline.current_weight_kg * 2.20462 * 10) / 10;
+      paceVal.textContent = `${weeklyLbs} lbs/week (~${timeline.weekly_rate_kg} kg)`;
+      messageVal.textContent = `Pacing to reach ${targetLbs} lbs from ${currentLbs} lbs with your current daily deficit/surplus.`;
+    } else {
+      paceVal.textContent = `${timeline.weekly_rate_kg} kg/week (~${Math.round(timeline.weekly_rate_kg * 2.20462 * 10) / 10} lbs)`;
+      messageVal.textContent = `Pacing to reach ${timeline.target_weight_kg} kg from ${timeline.current_weight_kg} kg with your current daily deficit/surplus.`;
+    }
   } else {
     dateVal.textContent = "--";
     weeksVal.textContent = "--";
@@ -661,18 +771,21 @@ function renderMealDistribution(dist) {
 function applyMacroSplit(presetKey, customSplit) {
   if (!currentCalculation) return;
 
+  const weightKg = currentCalculation.inputs?.weight_kg || (currentUnitSystem === "imperial" ? (parseFloat(document.getElementById("weightInput")?.value || 154) / 2.20462) : parseFloat(document.getElementById("weightInput")?.value || 70));
+
   let splitData;
   if (presetKey === "custom" && customSplit) {
     const target = currentCalculation.target_calories;
     const c_cals = Math.round(target * (customSplit.carbs_pct / 100));
     const p_cals = Math.round(target * (customSplit.protein_pct / 100));
     const f_cals = Math.round(target * (customSplit.fat_pct / 100));
+    const p_grams = Math.round(p_cals / 4);
     splitData = {
       label: "Custom Split",
       percentages: customSplit,
       calories: { carbs: c_cals, protein: p_cals, fat: f_cals, total: target },
-      grams: { carbs: Math.round(c_cals / 4), protein: Math.round(p_cals / 4), fat: Math.round(f_cals / 9) },
-      protein_per_kg: Math.round((Math.round(p_cals / 4) / currentCalculation.inputs.weight_kg) * 100) / 100
+      grams: { carbs: Math.round(c_cals / 4), protein: p_grams, fat: Math.round(f_cals / 9) },
+      protein_per_kg: Math.round((p_grams / Math.max(1, weightKg)) * 100) / 100
     };
   } else {
     splitData = currentCalculation.macros[presetKey] || currentCalculation.macros.balanced;
@@ -699,8 +812,17 @@ function applyMacroSplit(presetKey, customSplit) {
   if (proteinGrams) proteinGrams.textContent = `${splitData.grams.protein}g`;
   if (proteinCals) proteinCals.textContent = `${splitData.calories.protein} kcal`;
   if (proteinPct) proteinPct.textContent = `${splitData.percentages.protein}%`;
-  if (proteinPerKg && splitData.protein_per_kg) {
-    proteinPerKg.textContent = `${splitData.protein_per_kg} g/kg bodyweight`;
+
+  if (proteinPerKg) {
+    const pGrams = splitData.grams.protein;
+    const pPerKg = Math.round((pGrams / Math.max(1, weightKg)) * 100) / 100;
+    const pPerLb = Math.round((pGrams / Math.max(1, weightKg * 2.20462)) * 100) / 100;
+
+    if (currentUnitSystem === "imperial") {
+      proteinPerKg.textContent = `${pPerLb} g/lb (${pPerKg} g/kg)`;
+    } else {
+      proteinPerKg.textContent = `${pPerKg} g/kg bodyweight`;
+    }
   }
 
   if (fatGrams) fatGrams.textContent = `${splitData.grams.fat}g`;
@@ -823,6 +945,8 @@ function renderFoodSearchResults(foods) {
     return;
   }
 
+  const defaultCat = getDefaultMealCategory();
+
   container.innerHTML = foods.map(f => `
     <div class="p-3 bg-white dark:bg-slate-800/80 rounded-xl border border-slate-200 dark:border-slate-700/60 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 hover:border-blue-400 transition-all">
       <div class="min-w-0 flex-1">
@@ -841,10 +965,10 @@ function renderFoodSearchResults(foods) {
           <span class="text-[10px] text-slate-400 pr-1.5 font-semibold">g</span>
         </div>
         <select id="mealType_${f.id}" class="text-xs px-2 py-1 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg text-slate-700 dark:text-slate-200">
-          <option value="breakfast">Breakfast</option>
-          <option value="lunch" selected>Lunch</option>
-          <option value="dinner">Dinner</option>
-          <option value="snacks">Snack</option>
+          <option value="breakfast" ${defaultCat === "breakfast" ? "selected" : ""}>Breakfast</option>
+          <option value="lunch" ${defaultCat === "lunch" ? "selected" : ""}>Lunch</option>
+          <option value="dinner" ${defaultCat === "dinner" ? "selected" : ""}>Dinner</option>
+          <option value="snacks" ${defaultCat === "snacks" ? "selected" : ""}>Snack</option>
         </select>
         <button onclick="addFoodToMeal('${f.id}')" class="px-2.5 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-semibold transition-all shadow-sm cursor-pointer">
           + Add
@@ -1037,21 +1161,30 @@ function loadSavedFormData() {
 
   try {
     const data = JSON.parse(saved);
+    if (data.unit_system && data.unit_system !== currentUnitSystem) {
+      setUnitSystem(data.unit_system);
+    }
     if (data.gender) {
       const radio = document.querySelector(`input[name='gender'][value='${data.gender}']`);
       if (radio) radio.checked = true;
     }
     if (data.age) document.getElementById("ageInput").value = data.age;
     if (data.weight) {
-      document.getElementById("weightInput").value = data.unit_system === "imperial" ? Math.round(parseFloat(data.weight) / 2.20462) : data.weight;
+      document.getElementById("weightInput").value = data.weight;
     }
-    if (data.height) {
-      if (data.unit_system === "imperial") {
-        const ft = parseFloat(data.height || 0);
-        const inches = parseFloat(data.height_inches || 0);
-        document.getElementById("heightCmInput").value = Math.round((ft * 12 + inches) * 2.54);
-      } else {
-        document.getElementById("heightCmInput").value = data.height;
+    if (data.unit_system === "imperial") {
+      if (data.height) {
+        const ftEl = document.getElementById("heightFeetInput");
+        if (ftEl) ftEl.value = data.height;
+      }
+      if (data.height_inches !== undefined) {
+        const inEl = document.getElementById("heightInchesInput");
+        if (inEl) inEl.value = data.height_inches;
+      }
+    } else {
+      if (data.height) {
+        const cmEl = document.getElementById("heightCmInput");
+        if (cmEl) cmEl.value = data.height;
       }
     }
     if (data.target_weight) document.getElementById("targetWeightInput").value = data.target_weight;
@@ -1120,11 +1253,17 @@ window.handleCalculateClick = function(event) {
   const weightInput = document.getElementById("weightInput");
   const ageInput = document.getElementById("ageInput");
   const heightCmInput = document.getElementById("heightCmInput");
+  const heightFeetInput = document.getElementById("heightFeetInput");
+  const heightInchesInput = document.getElementById("heightInchesInput");
 
   const weight = parseFloat(weightInput?.value);
-  if (isNaN(weight) || weight <= 0) {
+  const minWeight = currentUnitSystem === "imperial" ? 44 : 20;
+  const maxWeight = currentUnitSystem === "imperial" ? 880 : 400;
+  const unitLabel = currentUnitSystem === "imperial" ? "lbs" : "kg";
+
+  if (isNaN(weight) || weight < minWeight || weight > maxWeight) {
     if (errBanner && errMsg) {
-      errMsg.textContent = "Please enter a valid weight in kg (e.g. 70 kg).";
+      errMsg.textContent = `Please enter a valid weight between ${minWeight} and ${maxWeight} ${unitLabel}.`;
       errBanner.classList.remove("hidden");
     }
     weightInput?.focus();
@@ -1134,21 +1273,34 @@ window.handleCalculateClick = function(event) {
   const age = parseInt(ageInput?.value);
   if (isNaN(age) || age < 10 || age > 120) {
     if (errBanner && errMsg) {
-      errMsg.textContent = "Please enter an age between 10 and 120.";
+      errMsg.textContent = "Please enter an age between 10 and 120 years.";
       errBanner.classList.remove("hidden");
     }
     ageInput?.focus();
     return;
   }
 
-  const cm = parseFloat(heightCmInput?.value);
-  if (isNaN(cm) || cm < 50) {
-    if (errBanner && errMsg) {
-      errMsg.textContent = "Please enter a valid height in centimeters.";
-      errBanner.classList.remove("hidden");
+  if (currentUnitSystem === "imperial") {
+    const ft = parseFloat(heightFeetInput?.value);
+    const inVal = parseFloat(heightInchesInput?.value || 0);
+    if (isNaN(ft) || ft < 1 || ft > 8 || isNaN(inVal) || inVal < 0 || inVal > 11.9) {
+      if (errBanner && errMsg) {
+        errMsg.textContent = "Please enter a valid height in feet (1-8 ft) and inches (0-11 in).";
+        errBanner.classList.remove("hidden");
+      }
+      heightFeetInput?.focus();
+      return;
     }
-    heightCmInput?.focus();
-    return;
+  } else {
+    const cm = parseFloat(heightCmInput?.value);
+    if (isNaN(cm) || cm < 50 || cm > 280) {
+      if (errBanner && errMsg) {
+        errMsg.textContent = "Please enter a valid height between 50 and 280 centimeters.";
+        errBanner.classList.remove("hidden");
+      }
+      heightCmInput?.focus();
+      return;
+    }
   }
 
   // Execute full calculation with force animation
@@ -1182,7 +1334,7 @@ window.handleCalculateClick = function(event) {
   // Toast confirmation
   const toast = document.getElementById("calcSuccessToast");
   const toastMsg = document.getElementById("calcToastMessage");
-  if (toast && toastMsg && currentCalculation) {
+  if (toast && toastMsg && currentCalculation && !currentCalculation.error) {
     toastMsg.textContent = `Daily Target: ${currentCalculation.target_calories.toLocaleString()} kcal/day • TDEE: ${currentCalculation.tdee.toLocaleString()} kcal`;
     toast.classList.remove("hidden");
     setTimeout(() => {
@@ -1215,9 +1367,26 @@ window.applyQuickPreset = function(type) {
   if (radio) radio.checked = true;
 
   document.getElementById("ageInput").value = p.age;
-  document.getElementById("weightInput").value = p.weight;
-  document.getElementById("heightCmInput").value = p.height;
-  document.getElementById("targetWeightInput").value = p.targetWeight;
+  if (currentUnitSystem === "imperial") {
+    document.getElementById("weightInput").value = Math.round(p.weight * 2.20462 * 10) / 10;
+    if (p.targetWeight) {
+      document.getElementById("targetWeightInput").value = Math.round(p.targetWeight * 2.20462 * 10) / 10;
+    } else {
+      document.getElementById("targetWeightInput").value = "";
+    }
+    const totalInches = p.height / 2.54;
+    const feet = Math.floor(totalInches / 12);
+    const inches = Math.round(totalInches % 12);
+    const heightFeetInput = document.getElementById("heightFeetInput");
+    const heightInchesInput = document.getElementById("heightInchesInput");
+    if (heightFeetInput) heightFeetInput.value = feet;
+    if (heightInchesInput) heightInchesInput.value = inches;
+  } else {
+    document.getElementById("weightInput").value = p.weight;
+    document.getElementById("heightCmInput").value = p.height;
+    document.getElementById("targetWeightInput").value = p.targetWeight;
+  }
+
   document.getElementById("activitySelect").value = p.activity;
   document.getElementById("goalSelect").value = p.goal;
   document.getElementById("formulaSelect").value = p.formula;
@@ -1627,6 +1796,37 @@ function renderHistoryKPIs(data) {
   const advisoryEl = document.getElementById("historyAdvisoryText");
 
   if (labelEl) labelEl.textContent = data.period_label;
+
+  if (data.logged_days_count === 0) {
+    if (totalCalsEl) totalCalsEl.textContent = "0";
+    if (daysLoggedEl) daysLoggedEl.textContent = `0 recorded days (${data.day_count} total)`;
+    if (dailyAvgEl) dailyAvgEl.textContent = "--";
+    if (targetCompEl) targetCompEl.textContent = `Target: ${data.target_calories ? data.target_calories.toLocaleString() : "--"} kcal`;
+    if (avgDeltaEl) {
+      avgDeltaEl.className = "text-xl sm:text-2xl font-black text-slate-400 dark:text-slate-500";
+      avgDeltaEl.textContent = "--";
+    }
+    if (paceSubEl) paceSubEl.textContent = "No logged meals in this period";
+
+    if (avgPEl) avgPEl.textContent = "--g";
+    if (avgCEl) avgCEl.textContent = "--g";
+    if (avgFEl) avgFEl.textContent = "--g";
+    if (pPctEl) pPctEl.textContent = "--%";
+    if (cPctEl) cPctEl.textContent = "--%";
+    if (fPctEl) fPctEl.textContent = "--%";
+    if (pTotalEl) pTotalEl.textContent = "0g total";
+    if (cTotalEl) cTotalEl.textContent = "0g total";
+    if (fTotalEl) fTotalEl.textContent = "0g total";
+
+    if (pBar) pBar.style.width = "0%";
+    if (cBar) cBar.style.width = "0%";
+    if (fBar) fBar.style.width = "0%";
+
+    if (adherenceEl) adherenceEl.textContent = "--";
+    if (advisoryEl) advisoryEl.textContent = "No data yet. Log your meals using the tracker above to view historical consistency and intake trends.";
+    return;
+  }
+
   if (totalCalsEl) totalCalsEl.textContent = data.total_calories.toLocaleString();
   if (daysLoggedEl) daysLoggedEl.textContent = `In ${data.logged_days_count} recorded days (${data.day_count} total)`;
   if (dailyAvgEl) dailyAvgEl.textContent = data.daily_avg_calories.toLocaleString();
@@ -1674,11 +1874,11 @@ function renderHistoryKPIs(data) {
     if (data.daily_avg_calories < 1200) {
       advisoryEl.textContent = "⚠️ Average calories are critically low (<1,200 kcal). Consider increasing healthy nutrient-dense staples.";
     } else if (Math.abs(data.avg_delta) <= 150) {
-      advisoryEl.textContent = "✓ Excellent intake consistency! Average calories closely match your designated target.";
+      advisoryEl.textContent = "✓ Good intake consistency! Average calories closely match your designated target.";
     } else if (data.avg_delta < -500) {
-      advisoryEl.textContent = "⚡ Aggressive caloric deficit recorded. Ensure sufficient daily protein to maintain lean muscle mass.";
+      advisoryEl.textContent = "⚡ Caloric deficit recorded. Ensure sufficient daily protein to maintain lean muscle mass.";
     } else {
-      advisoryEl.textContent = "✓ Caloric intake is sustainably aligned with physiological metabolic requirements.";
+      advisoryEl.textContent = "✓ Caloric intake is sustainably aligned with estimated metabolic requirements.";
     }
   }
 }
@@ -1777,6 +1977,19 @@ function renderHistoryDailyList(data) {
 
   if (countEl) countEl.textContent = `Showing ${data.daily_breakdown.length} days (${data.logged_days_count} with meals)`;
 
+  if (data.logged_days_count === 0) {
+    container.innerHTML = `
+      <div class="p-8 text-center border border-dashed border-slate-200 dark:border-slate-800 rounded-xl bg-slate-50/50 dark:bg-slate-850/50">
+        <div class="w-10 h-10 mx-auto rounded-full bg-slate-100 dark:bg-slate-800 text-slate-400 flex items-center justify-center mb-2">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
+        </div>
+        <p class="text-xs font-semibold text-slate-700 dark:text-slate-300">No data yet</p>
+        <p class="text-[11px] text-slate-400 mt-1">Start logging meals in the Interactive Meal Logger to populate daily history.</p>
+      </div>
+    `;
+    return;
+  }
+
   const reversedDays = [...data.daily_breakdown].reverse();
 
   container.innerHTML = reversedDays.map((day, idx) => {
@@ -1859,8 +2072,8 @@ window.generatePdfReport = function() {
   }
 
   const d = currentHistoryData;
-  const userName = currentUser ? currentUser.name : "Alex Morgan";
-  const userEmail = currentUser ? currentUser.email : "alex.morgan@gmail.com";
+  const userName = currentUser ? currentUser.name : "Guest User";
+  const userEmail = currentUser ? currentUser.email : "Local Offline Account";
   const modal = document.getElementById("periodReportModal");
   const content = document.getElementById("periodReportPdfContent");
   const titleEl = document.getElementById("modalReportTitle");
@@ -1877,10 +2090,10 @@ window.generatePdfReport = function() {
           <h1 class="text-xl font-extrabold text-slate-900 tracking-tight flex items-center gap-2">
             <span>🥗 NutriGlance Calorie Tracker</span>
           </h1>
-          <p class="text-xs text-slate-500 mt-0.5">Clinical Energy Balance & Nutritional History Audit</p>
+          <p class="text-xs text-slate-500 mt-0.5">Nutritional Energy Balance & History Report</p>
         </div>
         <div class="text-right text-[11px] text-slate-500">
-          <p class="font-bold text-slate-800">Verified Health Report</p>
+          <p class="font-bold text-slate-800">Nutritional Summary Report</p>
           <p>Generated: ${new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}</p>
         </div>
       </div>
@@ -1983,9 +2196,9 @@ window.generatePdfReport = function() {
         </table>
       </div>
 
-      <!-- Clinical Disclaimer & Footer -->
+      <!-- Disclaimer & Footer -->
       <div class="pt-3 border-t border-slate-200 text-[10px] text-slate-400 flex items-center justify-between">
-        <p>NutriGlance Calorie Tracker • Certified Nutritional Period Log</p>
+        <p>NutriGlance Calorie Tracker • Nutritional Period Log • Informational Reference</p>
         <p>Page 1 of 1 • Strictly Confidential</p>
       </div>
     `;

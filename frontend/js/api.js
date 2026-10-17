@@ -129,7 +129,6 @@ const Api = {
       }
     }
 
-    this.ensureLocalHistorySeeded();
     const local = JSON.parse(localStorage.getItem("calorie_meals") || "[]");
     const filtered = targetDate === "all" ? local : local.filter(m => (m.date || todayStr) === targetDate);
 
@@ -150,7 +149,6 @@ const Api = {
     const todayStr = new Date().toISOString().split("T")[0];
     const entryDate = mealData.date || todayStr;
 
-    this.ensureLocalHistorySeeded();
     let local = JSON.parse(localStorage.getItem("calorie_meals") || "[]");
     let entry;
     if (mealData.food_id) {
@@ -260,7 +258,6 @@ const Api = {
   },
 
   async getHistory(period = "last_week", startDate = "", endDate = "", targetCalories = 2150) {
-    this.ensureLocalHistorySeeded();
     let local = JSON.parse(localStorage.getItem("calorie_meals") || "[]");
     const today = new Date();
 
@@ -322,7 +319,7 @@ const Api = {
         full_day: cur.toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" }),
         calories: dayCals,
         target: targetCalories,
-        delta: dayCals - targetCalories,
+        delta: dayCals > 0 ? dayCals - targetCalories : 0,
         protein: dayP,
         carbs: dayC,
         fat: dayF,
@@ -334,7 +331,8 @@ const Api = {
     }
 
     const dayCount = dailyBreakdown.length || 1;
-    const dailyAvg = Math.round(totalCals / dayCount);
+    const dailyAvg = loggedDays > 0 ? Math.round(totalCals / loggedDays) : 0;
+    const avgDelta = loggedDays > 0 ? dailyAvg - targetCalories : 0;
     const pCals = totalP * 4, cCals = totalC * 4, fCals = totalF * 9;
     const mSum = Math.max(1, pCals + cCals + fCals);
 
@@ -349,18 +347,18 @@ const Api = {
       target_calories: targetCalories,
       total_calories: totalCals,
       daily_avg_calories: dailyAvg,
-      avg_delta: dailyAvg - targetCalories,
+      avg_delta: avgDelta,
       macros: {
         total_protein: Math.round(totalP * 10) / 10,
         total_carbs: Math.round(totalC * 10) / 10,
         total_fat: Math.round(totalF * 10) / 10,
-        avg_protein: Math.round((totalP / dayCount) * 10) / 10,
-        avg_carbs: Math.round((totalC / dayCount) * 10) / 10,
-        avg_fat: Math.round((totalF / dayCount) * 10) / 10,
+        avg_protein: loggedDays > 0 ? Math.round((totalP / loggedDays) * 10) / 10 : 0,
+        avg_carbs: loggedDays > 0 ? Math.round((totalC / loggedDays) * 10) / 10 : 0,
+        avg_fat: loggedDays > 0 ? Math.round((totalF / loggedDays) * 10) / 10 : 0,
         percentages: {
-          protein: Math.round((pCals / mSum) * 100),
-          carbs: Math.round((cCals / mSum) * 100),
-          fat: Math.round((fCals / mSum) * 100)
+          protein: loggedDays > 0 ? Math.round((pCals / mSum) * 100) : 0,
+          carbs: loggedDays > 0 ? Math.round((cCals / mSum) * 100) : 0,
+          fat: loggedDays > 0 ? Math.round((fCals / mSum) * 100) : 0
         }
       },
       daily_breakdown: dailyBreakdown,
@@ -368,12 +366,8 @@ const Api = {
     };
   },
 
-
-  ensureLocalHistorySeeded() {
-    const existing = localStorage.getItem("calorie_meals");
-    if (existing && JSON.parse(existing).length > 5) return;
-
-    // Seed 30 days of realistic history if empty
+  seedSampleDemoMeals() {
+    // Demo helper only called if user explicitly requests sample data
     const today = new Date();
     const seeded = [];
     const sampleFoods = [
@@ -383,14 +377,14 @@ const Api = {
       { meal_type: "snacks", name: "Greek Yogurt with Banana & Roasted Peanuts", serving: "1 cup + 1 fruit + nuts", calories: 371, protein: 25.6, carbs: 40.0, fat: 15.1 },
     ];
 
-    for (let dayOffset = 29; dayOffset >= 0; dayOffset--) {
+    for (let dayOffset = 6; dayOffset >= 0; dayOffset--) {
       const d = new Date(today);
       d.setDate(today.getDate() - dayOffset);
       const dateStr = d.toISOString().split("T")[0];
 
       sampleFoods.forEach(item => {
         seeded.push({
-          id: Math.random().toString(36).substr(2, 9),
+          id: Math.random().toString(36).substring(2, 9),
           date: dateStr,
           meal_type: item.meal_type,
           name: item.name,
@@ -406,24 +400,78 @@ const Api = {
     }
 
     localStorage.setItem("calorie_meals", JSON.stringify(seeded));
+    return seeded;
   },
 
   calculateClientSide(payload) {
     const gender = (payload.gender || "male").toLowerCase();
     const age = parseInt(payload.age || 25);
-    const weightKg = Math.round(parseFloat(payload.weight || 70) * 10) / 10;
-    const heightCm = Math.round(parseFloat(payload.height || 175) * 10) / 10;
-    const targetWeightKg = payload.target_weight ? parseFloat(payload.target_weight) : null;
+    const unitSystem = payload.unit_system || "metric";
 
-    // BMR
+    // Handle metric & imperial units
+    let weightKg = parseFloat(payload.weight || 70);
+    let heightCm = parseFloat(payload.height || 175);
+    let targetWeightKg = payload.target_weight ? parseFloat(payload.target_weight) : null;
+
+    if (unitSystem === "imperial") {
+      // payload.weight is in lbs
+      weightKg = weightKg / 2.20462;
+      // Handle imperial height: feet + inches
+      const feet = parseFloat(payload.height_feet !== undefined ? payload.height_feet : (payload.height || 0));
+      const inches = parseFloat(payload.height_inches !== undefined ? payload.height_inches : (payload.height_inches_part || 0));
+      const totalInches = (feet * 12) + inches;
+      heightCm = totalInches * 2.54;
+      if (targetWeightKg) {
+        targetWeightKg = targetWeightKg / 2.20462;
+      }
+    }
+
+    weightKg = Math.round(weightKg * 10) / 10;
+    heightCm = Math.round(heightCm * 10) / 10;
+    if (targetWeightKg) targetWeightKg = Math.round(targetWeightKg * 10) / 10;
+
+    // Biometric Input Validations
+    if (isNaN(age) || age < 10 || age > 120) {
+      return {
+        error: "Please enter a valid age between 10 and 120 years."
+      };
+    }
+    if (isNaN(weightKg) || weightKg < 20 || weightKg > 400) {
+      return {
+        error: "Please enter a valid weight between 20 kg (44 lbs) and 400 kg (880 lbs)."
+      };
+    }
+    if (isNaN(heightCm) || heightCm < 50 || heightCm > 280) {
+      return {
+        error: "Please enter a valid height between 50 cm (1 ft 8 in) and 280 cm (9 ft 2 in)."
+      };
+    }
+
+    // BMR Calculation & Formula Fallback
     let bmr = 0;
-    const formula = payload.formula || "mifflin";
+    let formulaUsed = payload.formula || "mifflin";
     const bodyFat = payload.body_fat ? parseFloat(payload.body_fat) : null;
+    const alerts = [];
 
-    if (formula === "katch" && bodyFat) {
-      const lbm = weightKg * (1 - bodyFat / 100);
-      bmr = Math.round(370 + 21.6 * lbm);
-    } else if (formula === "harris") {
+    if (formulaUsed === "katch") {
+      if (bodyFat && bodyFat > 0 && bodyFat < 70) {
+        const lbm = weightKg * (1 - bodyFat / 100);
+        bmr = Math.round(370 + 21.6 * lbm);
+      } else {
+        // Fall back to Mifflin-St Jeor when body fat is absent
+        formulaUsed = "mifflin";
+        alerts.push({
+          type: "info",
+          title: "Katch-McArdle Body Fat Notice",
+          message: "Katch-McArdle requires your body fat percentage. Since body fat was not entered, your BMR was calculated using the validated Mifflin-St Jeor formula."
+        });
+        if (gender === "male") {
+          bmr = Math.round(10 * weightKg + 6.25 * heightCm - 5 * age + 5);
+        } else {
+          bmr = Math.round(10 * weightKg + 6.25 * heightCm - 5 * age - 161);
+        }
+      }
+    } else if (formulaUsed === "harris") {
       if (gender === "male") {
         bmr = Math.round(88.362 + (13.397 * weightKg) + (4.799 * heightCm) - (5.677 * age));
       } else {
@@ -463,17 +511,19 @@ const Api = {
 
     const targetCalories = Math.max(500, tdee + dailyDelta);
 
-    // Macros
+    // Macros computation
     const createSplit = (c_pct, p_pct, f_pct, label) => {
       const c_cals = Math.round(targetCalories * (c_pct / 100));
       const p_cals = Math.round(targetCalories * (p_pct / 100));
       const f_cals = Math.round(targetCalories * (f_pct / 100));
+      const p_grams = Math.round(p_cals / 4);
       return {
         label,
         percentages: { carbs: c_pct, protein: p_pct, fat: f_pct },
         calories: { carbs: c_cals, protein: p_cals, fat: f_cals, total: targetCalories },
-        grams: { carbs: Math.round(c_cals / 4), protein: Math.round(p_cals / 4), fat: Math.round(f_cals / 9) },
-        protein_per_kg: Math.round((Math.round(p_cals / 4) / weightKg) * 100) / 100
+        grams: { carbs: Math.round(c_cals / 4), protein: p_grams, fat: Math.round(f_cals / 9) },
+        protein_per_kg: Math.round((p_grams / weightKg) * 10) / 10,
+        protein_per_lb: Math.round((p_grams / (weightKg * 2.20462)) * 10) / 10
       };
     };
 
@@ -484,24 +534,39 @@ const Api = {
       keto: createSplit(5, 25, 70, "Ketogenic")
     };
 
-    // Safety checks
+    // Safety checks & Advisories
     const minSafe = gender === "male" ? 1500 : 1200;
-    const alerts = [];
     if (targetCalories < minSafe) {
       alerts.push({
         type: "danger",
-        title: "Caloric Intake Critically Low",
-        message: `A target of ${targetCalories} kcal is below the general clinical minimum (${minSafe} kcal for ${gender}s). A slower deficit is advised to protect lean muscle mass and metabolic health.`
+        title: "Caloric Target Below Recommended Minimum",
+        message: `A daily target of ${targetCalories} kcal is below standard nutritional health guidelines (${minSafe} kcal for ${gender}s). A smaller deficit is advised to protect lean muscle mass, metabolic rate, and energy levels.`
       });
     } else if (targetCalories < bmr) {
       alerts.push({
         type: "warning",
-        title: "Below Basal Metabolic Rate",
-        message: `Your target (${targetCalories} kcal) is below your BMR (${bmr} kcal). Make sure to prioritize protein and resistance training.`
+        title: "Target Below Basal Metabolic Rate",
+        message: `Your target (${targetCalories} kcal) is below your estimated resting BMR (${bmr} kcal). Make sure to prioritize protein and avoid staying in deep deficits for extended durations.`
       });
     }
 
-    // Timeline
+    if (age < 18) {
+      alerts.push({
+        type: "warning",
+        title: "Adolescent Guidance Advisory",
+        message: "Nutritional restriction and caloric deficits are not recommended for individuals under 18 without pediatrician or pediatric dietitian supervision."
+      });
+    }
+
+    if (dailyDelta <= -1000) {
+      alerts.push({
+        type: "warning",
+        title: "Aggressive Caloric Deficit Notice",
+        message: "A 1,000 kcal/day deficit (~2 lbs / 0.9 kg per week) is aggressive. A moderate deficit of 300–500 kcal/day is recommended for sustainable fat loss without fatigue or muscle breakdown."
+      });
+    }
+
+    // Timeline calculation
     let timeline = { has_target: false, message: "Maintain current weight" };
     if (targetWeightKg && Math.abs(weightKg - targetWeightKg) > 0.1 && dailyDelta !== 0) {
       const diffKg = targetWeightKg - weightKg;
@@ -512,16 +577,23 @@ const Api = {
         const weeksNeeded = Math.round((daysNeeded / 7) * 10) / 10;
         const targetDate = new Date();
         targetDate.setDate(targetDate.getDate() + daysNeeded);
+        const weeklyRateKg = Math.round((Math.abs(dailyDelta) * 7 / 7700) * 100) / 100;
+        const weeklyRateLbs = Math.round((weeklyRateKg * 2.20462) * 10) / 10;
+
         timeline = {
           has_target: true,
           achievable: true,
           current_weight_kg: weightKg,
           target_weight_kg: Math.round(targetWeightKg * 10) / 10,
+          current_weight_lbs: Math.round(weightKg * 2.20462 * 10) / 10,
+          target_weight_lbs: Math.round(targetWeightKg * 2.20462 * 10) / 10,
           weight_change_kg: Math.round(diffKg * 10) / 10,
+          weight_change_lbs: Math.round(diffKg * 2.20462 * 10) / 10,
           days_needed: daysNeeded,
           weeks_needed: weeksNeeded,
           projected_date: targetDate.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" }),
-          weekly_rate_kg: Math.round((Math.abs(dailyDelta) * 7 / 7700) * 100) / 100
+          weekly_rate_kg: weeklyRateKg,
+          weekly_rate_lbs: weeklyRateLbs
         };
       }
     }
@@ -534,7 +606,17 @@ const Api = {
     else if (bmi >= 30) bmiCategory = "Obese";
 
     return {
-      inputs: { gender, age, weight_kg: weightKg, height_cm: heightCm, unit_system: "metric", formula },
+      inputs: {
+        gender,
+        age,
+        weight_kg: weightKg,
+        weight_lbs: Math.round(weightKg * 2.20462 * 10) / 10,
+        height_cm: heightCm,
+        height_inches: Math.round((heightCm / 2.54) * 10) / 10,
+        unit_system: unitSystem,
+        formula: formulaUsed
+      },
+      formula_used: formulaUsed,
       bmi: { score: bmi, category: bmiCategory },
       bmr,
       tdee,
@@ -559,3 +641,8 @@ const Api = {
     };
   }
 };
+
+window.Api = Api;
+if (typeof module !== "undefined" && module.exports) {
+  module.exports = Api;
+}
