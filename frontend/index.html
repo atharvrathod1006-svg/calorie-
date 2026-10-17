@@ -88,8 +88,8 @@
 
       <!-- Action Items & Controls -->
       <div class="flex items-center gap-1.5 sm:gap-2.5">
-        <!-- History Option in Login Bar -->
-        <div class="relative" id="navHistoryDropdownWrapper">
+        <!-- History Option (Hidden before sign in, integrated into user profile menu after sign in) -->
+        <div class="relative hidden" id="navHistoryDropdownWrapper">
           <button id="navHistoryBtn" onclick="toggleNavHistoryDropdown(event)" class="flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1.5 rounded-xl border border-blue-200 dark:border-blue-800/80 bg-blue-50/90 dark:bg-blue-950/60 hover:bg-blue-100 dark:hover:bg-blue-900/60 text-blue-700 dark:text-blue-300 text-xs font-bold shadow-sm transition-all" title="Calorie Intake History & Reports">
             <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4 text-blue-600 dark:text-blue-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -97,24 +97,53 @@
             <span>History</span>
             <svg class="w-3 h-3 text-blue-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
           </button>
+        </div>
 
-          <!-- History Dropdown Menu -->
-          <div id="navHistoryDropdownMenu" class="hidden absolute right-0 mt-2 w-64 rounded-2xl bg-white dark:bg-slate-850 border border-slate-200 dark:border-slate-700 shadow-xl py-2 z-50 text-xs divide-y divide-slate-100 dark:divide-slate-800">
-            <div class="px-3.5 py-2">
-              <p class="font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
-                <svg class="w-4 h-4 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
-                <span>Calorie Intake History</span>
-              </p>
-              <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">Quickly view past intake or export PDF</p>
+        <!-- Email Sign In Button (shown when logged out) -->
+        <button id="authSignInBtn" onclick="openAuthModal('signin')" class="flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-100 text-xs font-bold shadow-sm transition-all" title="Sign In or Register with Email">
+          <svg class="w-3.5 h-3.5 text-blue-600 dark:text-blue-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
+          <span>Sign In</span>
+        </button>
+
+        <!-- User Profile Widget (shown in nav bar after sign in completed) -->
+        <div class="relative hidden" id="userProfileWidget">
+          <button id="userProfileBtn" onclick="toggleUserDropdown(event)" class="flex items-center gap-1.5 p-1 sm:p-1.5 pr-2 sm:pr-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-xs font-semibold transition-all shadow-sm border border-slate-200 dark:border-slate-700">
+            <div class="w-6 h-6 rounded-lg bg-gradient-to-tr from-blue-600 to-indigo-600 text-white flex items-center justify-center font-bold text-[10px]" id="userAvatarText">
+              U
+            </div>
+            <span id="userNameSpan" class="max-w-[70px] sm:max-w-[100px] truncate text-slate-700 dark:text-slate-200 font-medium">User</span>
+            <svg class="w-3 h-3 text-slate-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+          </button>
+
+          <!-- Dropdown Menu with All Options after Sign In -->
+          <div id="userDropdownMenu" class="hidden absolute right-0 mt-2 w-72 rounded-2xl bg-white dark:bg-slate-850 border border-slate-200 dark:border-slate-700 shadow-2xl py-2 z-50 text-xs divide-y divide-slate-100 dark:divide-slate-800 animate-in fade-in zoom-in-95 duration-100">
+            
+            <!-- User Profile Header -->
+            <div class="px-3.5 py-2.5 bg-slate-50/80 dark:bg-slate-800/50">
+              <div class="flex items-center gap-2.5">
+                <div class="w-8 h-8 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-600 text-white flex items-center justify-center font-bold text-xs shrink-0" id="userDropdownAvatar">
+                  U
+                </div>
+                <div class="min-w-0 flex-1">
+                  <p class="font-bold text-slate-900 dark:text-white truncate" id="userDropdownName">User Name</p>
+                  <p class="text-[11px] text-slate-500 dark:text-slate-400 truncate" id="userDropdownEmail">user@example.com</p>
+                </div>
+              </div>
             </div>
 
+            <!-- Calorie Intake History Options -->
             <div class="py-1">
+              <div class="px-3.5 py-1 text-[10px] font-bold text-slate-400 uppercase tracking-wider flex items-center justify-between">
+                <span>Calorie Intake History</span>
+                <span class="text-[9px] px-1 rounded bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400">Quick View</span>
+              </div>
+              
               <button type="button" onclick="navGoToHistory('yesterday')" class="w-full text-left px-3.5 py-2 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 flex items-center justify-between group transition-colors">
                 <div class="flex items-center gap-2">
                   <span class="w-6 h-6 rounded-lg bg-amber-50 dark:bg-amber-950/50 text-amber-600 flex items-center justify-center font-bold text-xs">⏱️</span>
                   <div>
                     <p class="font-semibold text-slate-800 dark:text-slate-100 group-hover:text-blue-600 dark:group-hover:text-blue-400">Yesterday</p>
-                    <p class="text-[10px] text-slate-400">Calories eaten yesterday & balance</p>
+                    <p class="text-[10px] text-slate-400">Calories eaten & deficit balance</p>
                   </div>
                 </div>
                 <span class="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400">1 Day</span>
@@ -143,56 +172,55 @@
               </button>
             </div>
 
+            <!-- PDF Reports & Dashboard -->
             <div class="py-1">
               <button type="button" onclick="navGeneratePdf()" class="w-full text-left px-3.5 py-2 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 font-bold flex items-center justify-between group transition-colors">
                 <div class="flex items-center gap-2">
                   <span class="w-6 h-6 rounded-lg bg-emerald-100 dark:bg-emerald-900/50 text-emerald-600 flex items-center justify-center text-xs">📄</span>
-                  <span>Generate PDF Report</span>
+                  <div>
+                    <p class="font-bold">Generate PDF Report</p>
+                    <p class="text-[10px] text-slate-400 font-normal">Export audit report with charts</p>
+                  </div>
                 </div>
                 <span class="text-[10px] bg-emerald-100 dark:bg-emerald-900/60 px-1.5 py-0.5 rounded text-emerald-700 dark:text-emerald-300">Export</span>
               </button>
-            </div>
 
-            <div class="p-2 bg-slate-50 dark:bg-slate-800/50 text-center">
-              <a href="#historySection" onclick="closeNavHistoryDropdown()" class="text-[11px] text-blue-600 dark:text-blue-400 hover:underline font-semibold block">
-                View Full History & Breakdown Dashboard ↓
+              <a href="#historySection" onclick="closeUserDropdown()" class="w-full text-left px-3.5 py-2 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 flex items-center gap-2 transition-colors block">
+                <span class="w-6 h-6 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 flex items-center justify-center text-xs">📈</span>
+                <div>
+                  <p class="font-semibold text-slate-800 dark:text-slate-200">Full History Dashboard ↓</p>
+                  <p class="text-[10px] text-slate-400">View detailed breakdown & logs</p>
+                </div>
               </a>
             </div>
-          </div>
-        </div>
 
-        <!-- Email Sign In Button (shown when logged out) -->
-        <button id="authSignInBtn" onclick="openAuthModal('signin')" class="flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-100 text-xs font-bold shadow-sm transition-all" title="Sign In or Register with Email">
-          <svg class="w-3.5 h-3.5 text-blue-600 dark:text-blue-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
-          <span>Sign In</span>
-        </button>
-
-        <!-- User Profile Widget (shown when logged in) -->
-        <div class="relative hidden" id="userProfileWidget">
-          <button id="userProfileBtn" onclick="toggleUserDropdown(event)" class="flex items-center gap-1.5 p-1 sm:p-1.5 pr-2 sm:pr-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-xs font-semibold transition-all">
-            <div class="w-6 h-6 rounded-lg bg-gradient-to-tr from-blue-600 to-indigo-600 text-white flex items-center justify-center font-bold text-[10px]" id="userAvatarText">
-              U
-            </div>
-            <span id="userNameSpan" class="max-w-[70px] sm:max-w-[100px] truncate text-slate-700 dark:text-slate-200 font-medium">User</span>
-            <svg class="w-3 h-3 text-slate-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
-          </button>
-
-          <!-- Dropdown Menu -->
-          <div id="userDropdownMenu" class="hidden absolute right-0 mt-2 w-56 rounded-2xl bg-white dark:bg-slate-850 border border-slate-200 dark:border-slate-700 shadow-xl py-2 z-50 text-xs divide-y divide-slate-100 dark:divide-slate-800">
-            <div class="px-3.5 py-2">
-              <p class="font-bold text-slate-900 dark:text-white truncate" id="userDropdownName">User Name</p>
-              <p class="text-[11px] text-slate-500 dark:text-slate-400 truncate" id="userDropdownEmail">user@example.com</p>
-            </div>
+            <!-- Cloud Database & Sync -->
             <div class="py-1">
-              <button type="button" onclick="handleSyncLocalMealsToCloud()" class="w-full text-left px-3.5 py-2 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 flex items-center gap-2">
-                <span>☁️</span> <span>Sync Meals to Cloud</span>
+              <button type="button" onclick="handleSyncLocalMealsToCloud()" class="w-full text-left px-3.5 py-2 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 flex items-center gap-2 transition-colors">
+                <span class="w-6 h-6 rounded-lg bg-blue-50 dark:bg-blue-950/50 text-blue-600 flex items-center justify-center text-xs">☁️</span>
+                <div>
+                  <p class="font-semibold text-slate-800 dark:text-slate-200">Sync Meals to Cloud</p>
+                  <p class="text-[10px] text-slate-400">Save local meals to Supabase</p>
+                </div>
+              </button>
+
+              <button type="button" onclick="openSupabaseModal(); closeUserDropdown();" class="w-full text-left px-3.5 py-2 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 text-slate-700 dark:text-slate-200 flex items-center gap-2 transition-colors">
+                <span class="w-6 h-6 rounded-lg bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 flex items-center justify-center text-xs">⚡</span>
+                <div>
+                  <p class="font-semibold text-slate-800 dark:text-slate-200">Supabase Settings</p>
+                  <p class="text-[10px] text-slate-400">Connect or test database</p>
+                </div>
               </button>
             </div>
+
+            <!-- Sign Out -->
             <div class="py-1">
-              <button type="button" onclick="handleSignOut()" class="w-full text-left px-3.5 py-2 hover:bg-red-50 dark:hover:bg-red-950/40 text-red-600 dark:text-red-400 font-semibold flex items-center gap-2">
-                <span>🚪</span> <span>Sign Out</span>
+              <button type="button" onclick="handleSignOut()" class="w-full text-left px-3.5 py-2 hover:bg-red-50 dark:hover:bg-red-950/40 text-red-600 dark:text-red-400 font-semibold flex items-center gap-2 transition-colors">
+                <span class="w-6 h-6 rounded-lg bg-red-50 dark:bg-red-950/40 text-red-600 flex items-center justify-center text-xs">🚪</span>
+                <span>Sign Out</span>
               </button>
             </div>
+
           </div>
         </div>
 

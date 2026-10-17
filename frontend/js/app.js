@@ -2073,8 +2073,14 @@ window.closeNavHistoryDropdown = function() {
   if (menu) menu.classList.add("hidden");
 };
 
+window.closeUserDropdown = function() {
+  const menu = document.getElementById("userDropdownMenu");
+  if (menu) menu.classList.add("hidden");
+};
+
 window.navGoToHistory = function(period) {
   closeNavHistoryDropdown();
+  closeUserDropdown();
 
   // Select period
   if (period && typeof selectHistoryPeriod === "function") {
@@ -2090,6 +2096,7 @@ window.navGoToHistory = function(period) {
 
 window.navGeneratePdf = function() {
   closeNavHistoryDropdown();
+  closeUserDropdown();
 
   if (typeof openPdfReportModal === "function") {
     openPdfReportModal();
@@ -2160,6 +2167,7 @@ function updateUserAuthUI() {
   const userDropdownName = document.getElementById("userDropdownName");
   const userDropdownEmail = document.getElementById("userDropdownEmail");
   const userAvatarText = document.getElementById("userAvatarText");
+  const userDropdownAvatar = document.getElementById("userDropdownAvatar");
 
   if (currentUser) {
     if (signInBtn) signInBtn.classList.add("hidden");
@@ -2172,6 +2180,7 @@ function updateUserAuthUI() {
     if (userDropdownName) userDropdownName.textContent = displayName;
     if (userDropdownEmail) userDropdownEmail.textContent = currentUser.email || "";
     if (userAvatarText) userAvatarText.textContent = initial;
+    if (userDropdownAvatar) userDropdownAvatar.textContent = initial;
   } else {
     if (signInBtn) signInBtn.classList.remove("hidden");
     if (userWidget) userWidget.classList.add("hidden");
