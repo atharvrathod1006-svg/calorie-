@@ -505,7 +505,7 @@
         <div id="calcSuccessToast" class="hidden p-3 rounded-xl bg-emerald-500 text-white text-xs sm:text-sm font-bold shadow-md shadow-emerald-500/20 flex items-center justify-between transition-all">
           <div class="flex items-center gap-2">
             <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
-            <span id="calcToastMessage">Calories calculated successfully!</span>
+            <span id="calcToastMessage"></span>
           </div>
           <span class="text-[11px] opacity-80" id="calcToastTime"></span>
         </div>
@@ -1391,27 +1391,6 @@
           </button>
         </div>
       </div>
-
-      <!-- SQL Schema Instructions Accordion -->
-      <details class="group rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-850 p-3 text-xs">
-        <summary class="font-bold text-slate-800 dark:text-slate-200 cursor-pointer flex items-center justify-between">
-          <span class="flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400">
-            <span>📋</span> Supabase SQL Setup Script
-          </span>
-          <span class="text-[11px] text-slate-400 group-open:rotate-180 transition-transform">▼</span>
-        </summary>
-        <div class="mt-3 space-y-2">
-          <p class="text-[11px] text-slate-500 dark:text-slate-400">
-            Run this once in your <strong>Supabase Dashboard → SQL Editor</strong> to create the tables:
-          </p>
-          <div class="relative">
-            <pre class="bg-slate-900 text-emerald-400 p-3 rounded-xl text-[10px] font-mono overflow-x-auto max-h-48" id="supabaseSqlPre"></pre>
-            <button type="button" onclick="copySupabaseSqlScript()" class="absolute top-2 right-2 px-2 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded text-[10px] font-bold shadow transition-all" id="copySqlBtn">
-              Copy SQL
-            </button>
-          </div>
-        </div>
-      </details>
 
       <p class="text-[10px] text-center text-slate-400">
         💡 If Supabase is disconnected, NutriGlance automatically saves your data offline in browser localStorage.

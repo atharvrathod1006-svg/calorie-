@@ -1,0 +1,137 @@
+/* Modern Custom Styles for Calorie & Macro Calculator */
+:root {
+  --primary-color: #3b82f6;
+  --primary-dark: #1d4ed8;
+  --protein-color: #ef4444;
+  --carbs-color: #3b82f6;
+  --fat-color: #f59e0b;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.05);
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(156, 163, 175, 0.5);
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(107, 114, 128, 0.8);
+}
+
+/* Hide scrollbar for mobile swipeable containers */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* Smooth touch scrolling and tap highlighting */
+html {
+  scroll-behavior: smooth;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Prevent iOS Safari from auto-zooming on focus when font-size < 16px */
+@media (max-width: 640px) {
+  input[type="text"],
+  input[type="number"],
+  input[type="email"],
+  input[type="password"],
+  select {
+    font-size: 16px !important;
+  }
+}
+
+/* Glassmorphism subtle effect */
+.glass-card {
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+/* Smooth transitions */
+.transition-all-custom {
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Number input spinners removal for clean look */
+input[type=number]::-webkit-inner-spin-button, 
+input[type=number]::-webkit-outer-spin-button { 
+  -webkit-appearance: none; 
+  margin: 0; 
+}
+input[type=number] {
+  -moz-appearance: textfield;
+}
+
+/* Active preset button indicator */
+.macro-preset-btn.active {
+  background-color: #3b82f6;
+  color: #ffffff;
+  border-color: #3b82f6;
+}
+.dark .macro-preset-btn.active {
+  background-color: #2563eb;
+  color: #ffffff;
+  border-color: #2563eb;
+}
+
+/* Pulse animation for active server badge */
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(1.15); }
+}
+.pulse-indicator {
+  animation: pulse-dot 2s infinite ease-in-out;
+}
+
+/* Print Stylesheet for clean export */
+@media print {
+  body {
+    background: white !important;
+    color: black !important;
+    font-size: 12pt;
+  }
+  .no-print, header, footer, #mealLoggerSection, .calculator-form-container, #printReportBtn, #themeToggleBtn {
+    display: none !important;
+  }
+  #resultsSection {
+    display: block !important;
+    width: 100% !important;
+  }
+  .glass-card {
+    box-shadow: none !important;
+    border: 1px solid #e5e7eb !important;
+    break-inside: avoid;
+  }
+  .print-header {
+    display: block !important;
+    margin-bottom: 20px;
+    border-bottom: 2px solid #3b82f6;
+    padding-bottom: 10px;
+  }
+
+  /* When printing the period report modal, isolate and style the report container */
+  body:has(#periodReportModal:not(.hidden)) > *:not(#periodReportModal) {
+    display: none !important;
+  }
+  body:has(#periodReportModal:not(.hidden)) #periodReportModal {
+    position: static !important;
+    background: transparent !important;
+    padding: 0 !important;
+    display: block !important;
+  }
+  body:has(#periodReportModal:not(.hidden)) #periodReportPdfContent {
+    box-shadow: none !important;
+    border: none !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    padding: 0 !important;
+  }
+}
