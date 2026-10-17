@@ -215,7 +215,19 @@ const Api = {
 
     // Save to Supabase if configured
     if (window.SupabaseService && window.SupabaseService.isConfigured()) {
-      window.SupabaseService.insertMeal(entry).catch(err => console.warn("Supabase insert meal error:", err));
+      window.SupabaseService.insertMeal(entry).then(res => {
+        if (res && res.error) {
+          console.warn("Supabase insert rejected:", res.error);
+          const toast = document.getElementById("calcSuccessToast");
+          const toastMsg = document.getElementById("calcToastMessage");
+          if (toast && toastMsg) {
+            toastMsg.textContent = `⚠️ Saved locally, but Supabase rejected: ${res.error}`;
+            toast.className = "p-3 rounded-xl bg-amber-600 text-white text-xs font-bold shadow-md flex items-center justify-between";
+            toast.classList.remove("hidden");
+            setTimeout(() => toast.classList.add("hidden"), 6000);
+          }
+        }
+      }).catch(err => console.warn("Supabase insert meal error:", err));
     }
 
     return entry;

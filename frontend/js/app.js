@@ -151,8 +151,20 @@ window.handleSaveSupabaseConfig = async function() {
     const test = await service.testConnection();
 
     if (test.success) {
-      if (alertMsg) alertMsg.textContent = test.message || "✓ Connected to Supabase successfully!";
+      if (alertMsg) alertMsg.textContent = "✓ Connected! Syncing existing meals to cloud...";
       if (alertDot) alertDot.className = "w-2.5 h-2.5 rounded-full bg-emerald-500";
+      
+      try {
+        const syncRes = await service.syncLocalMeals();
+        if (syncRes && syncRes.count > 0) {
+          if (alertMsg) alertMsg.textContent = `✓ Connected & uploaded ${syncRes.count} meals to Supabase!`;
+        } else {
+          if (alertMsg) alertMsg.textContent = test.message || "✓ Connected to Supabase successfully!";
+        }
+      } catch (syncErr) {
+        console.warn("Auto-sync error:", syncErr);
+      }
+
       updateSupabaseStatusIndicator();
       setTimeout(() => {
         closeSupabaseModal();
@@ -168,6 +180,37 @@ window.handleSaveSupabaseConfig = async function() {
     if (alertMsg) alertMsg.textContent = "Error: " + err.message;
     if (alertDot) alertDot.className = "w-2.5 h-2.5 rounded-full bg-red-500";
   }
+};
+
+window.handleSyncLocalMealsToCloud = async function() {
+  const btn = document.getElementById("syncToCloudBtn");
+  const alertMsg = document.getElementById("supabaseAlertMessage");
+  const alertDot = document.getElementById("supabaseAlertDot");
+
+  const service = window.SupabaseService || (typeof SupabaseService !== "undefined" ? SupabaseService : null);
+  if (!service || !service.isConfigured()) {
+    alert("Please enter and save your Supabase credentials first.");
+    return;
+  }
+
+  if (btn) btn.disabled = true;
+  if (alertMsg) alertMsg.textContent = "Syncing local meals to Supabase cloud...";
+
+  try {
+    const res = await service.syncLocalMeals();
+    if (res.success) {
+      if (alertMsg) alertMsg.textContent = `✓ ${res.message || 'Synced successfully!'}`;
+      if (alertDot) alertDot.className = "w-2.5 h-2.5 rounded-full bg-emerald-500";
+      await loadMeals();
+    } else {
+      if (alertMsg) alertMsg.textContent = `Sync failed: ${res.message}. (Did you run the SQL script in Supabase?)`;
+      if (alertDot) alertDot.className = "w-2.5 h-2.5 rounded-full bg-red-500";
+    }
+  } catch (e) {
+    if (alertMsg) alertMsg.textContent = "Error during sync: " + e.message;
+    if (alertDot) alertDot.className = "w-2.5 h-2.5 rounded-full bg-red-500";
+  }
+  if (btn) btn.disabled = false;
 };
 
 window.handleClearSupabaseConfig = function() {
