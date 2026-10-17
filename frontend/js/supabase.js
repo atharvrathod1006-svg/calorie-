@@ -84,7 +84,11 @@ const SupabaseService = {
     const url = this.getUrl();
     const key = this.getAnonKey();
 
-    if (this.isConfigured() && window.supabase && window.supabase.createClient) {
+    if (this.isConfigured()) {
+      if (!window.supabase || !window.supabase.createClient) {
+        console.warn("Supabase JS SDK library not loaded yet.");
+        return false;
+      }
       try {
         this.client = window.supabase.createClient(url, key, {
           auth: {
@@ -124,13 +128,23 @@ const SupabaseService = {
   },
 
   async testConnection() {
+    if (!window.supabase || !window.supabase.createClient) {
+      return { success: false, message: "Supabase JS SDK library is not loaded. Please check your internet connection." };
+    }
     if (!this.client) {
-      return { success: false, message: "Supabase client is not initialized." };
+      this.init();
+    }
+    if (!this.client) {
+      return { success: false, message: "Could not initialize client. Check that your URL starts with https:// and anon key is valid." };
     }
     try {
       const { data, error } = await this.client.from("meals").select("id").limit(1);
       if (error) {
-        return { success: false, message: `Connected, but table query returned: ${error.message}. (Did you run the SQL setup script?)` };
+        // If table doesn't exist yet, connection to Supabase project was still authenticated!
+        if (error.code === "42P01" || (error.message && error.message.includes("does not exist"))) {
+          return { success: true, message: "✓ Connected to Supabase! (Reminder: Run the SQL setup script below in Supabase SQL editor to create the meals table)" };
+        }
+        return { success: false, message: `Connected, but table query returned: ${error.message}` };
       }
       return { success: true, message: "Connected to Supabase database successfully!" };
     } catch (e) {
@@ -283,7 +297,11 @@ const SupabaseService = {
   }
 };
 
+// Explicitly attach to window for global access across all scripts
+window.SupabaseService = SupabaseService;
+
 // Auto-initialize if credentials exist
 document.addEventListener("DOMContentLoaded", () => {
   SupabaseService.init();
 });
+

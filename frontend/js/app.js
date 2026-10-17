@@ -138,20 +138,27 @@ window.handleSaveSupabaseConfig = async function() {
     return;
   }
 
+  const service = window.SupabaseService || (typeof SupabaseService !== "undefined" ? SupabaseService : null);
+  if (!service) {
+    if (alertMsg) alertMsg.textContent = "Supabase module is still initializing. Please wait a moment and try again.";
+    if (alertDot) alertDot.className = "w-2.5 h-2.5 rounded-full bg-amber-500";
+    return;
+  }
+
   try {
     if (alertMsg) alertMsg.textContent = "Testing connection to Supabase...";
-    window.SupabaseService.saveCredentials(url, key);
-    const test = await window.SupabaseService.testConnection();
+    service.saveCredentials(url, key);
+    const test = await service.testConnection();
 
     if (test.success) {
-      if (alertMsg) alertMsg.textContent = "✓ Connected to Supabase successfully!";
+      if (alertMsg) alertMsg.textContent = test.message || "✓ Connected to Supabase successfully!";
       if (alertDot) alertDot.className = "w-2.5 h-2.5 rounded-full bg-emerald-500";
       updateSupabaseStatusIndicator();
       setTimeout(() => {
         closeSupabaseModal();
         loadMeals();
         loadHistory(currentHistoryPeriod);
-      }, 1200);
+      }, 1500);
     } else {
       if (alertMsg) alertMsg.textContent = test.message;
       if (alertDot) alertDot.className = "w-2.5 h-2.5 rounded-full bg-amber-500";
@@ -165,7 +172,8 @@ window.handleSaveSupabaseConfig = async function() {
 
 window.handleClearSupabaseConfig = function() {
   if (confirm("Disconnect Supabase and switch back to offline LocalStorage mode?")) {
-    window.SupabaseService.clearCredentials();
+    const service = window.SupabaseService || (typeof SupabaseService !== "undefined" ? SupabaseService : null);
+    if (service) service.clearCredentials();
     const urlInput = document.getElementById("supabaseUrlInput");
     const keyInput = document.getElementById("supabaseKeyInput");
     if (urlInput) urlInput.value = "";
