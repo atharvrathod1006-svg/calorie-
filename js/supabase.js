@@ -11,15 +11,17 @@ const SUPABASE_SQL_SCHEMA = `-- ================================================
 -- Copy and paste this into your Supabase SQL Editor:
 -- ========================================================
 
--- 1. Create Profiles Table (Stores user profile information)
+-- 1. Create or Upgrade Profiles Table
 create table if not exists public.profiles (
-  id uuid references auth.users on delete cascade primary key,
-  email text,
-  full_name text,
-  avatar_url text,
-  created_at timestamp with time zone default timezone('utc'::text, now()),
-  updated_at timestamp with time zone default timezone('utc'::text, now())
+  id uuid references auth.users on delete cascade primary key
 );
+
+-- Ensure all required columns exist on profiles
+alter table public.profiles add column if not exists email text;
+alter table public.profiles add column if not exists full_name text;
+alter table public.profiles add column if not exists avatar_url text;
+alter table public.profiles add column if not exists created_at timestamp with time zone default timezone('utc'::text, now());
+alter table public.profiles add column if not exists updated_at timestamp with time zone default timezone('utc'::text, now());
 
 -- Trigger to auto-create public.profiles entry when user signs up in auth.users
 create or replace function public.handle_new_user()
@@ -54,48 +56,49 @@ select
 from auth.users
 on conflict (id) do nothing;
 
--- 2. Create Meals Table (Stores meal entries & macronutrients)
+-- 2. Create or Upgrade Meals Table
 create table if not exists public.meals (
-  id text primary key,
-  user_id text,
-  date text not null,
-  meal_type text not null,
-  name text not null,
-  serving text,
-  grams numeric,
-  calories integer not null default 0,
-  protein numeric default 0,
-  carbs numeric default 0,
-  fat numeric default 0,
-  created_at timestamp with time zone default timezone('utc'::text, now())
+  id text primary key
 );
+
+alter table public.meals add column if not exists user_id text;
+alter table public.meals add column if not exists date text;
+alter table public.meals add column if not exists meal_type text default 'breakfast';
+alter table public.meals add column if not exists name text default 'Food Item';
+alter table public.meals add column if not exists serving text;
+alter table public.meals add column if not exists grams numeric;
+alter table public.meals add column if not exists calories integer default 0;
+alter table public.meals add column if not exists protein numeric default 0;
+alter table public.meals add column if not exists carbs numeric default 0;
+alter table public.meals add column if not exists fat numeric default 0;
+alter table public.meals add column if not exists created_at timestamp with time zone default timezone('utc'::text, now());
 
 -- Ensure user_id allows null and remove auth.users FK constraint if present
 alter table public.meals drop constraint if exists meals_user_id_fkey;
 alter table public.meals alter column user_id drop not null;
 
--- 3. Create User Target Goals Table (Stores calorie, BMR, TDEE, and macro targets)
+-- 3. Create or Upgrade User Targets Table
 create table if not exists public.user_targets (
-  id text primary key,
-  user_id text,
-  target_calories integer default 2150,
-  tdee integer,
-  bmr integer,
-  weight numeric,
-  target_weight numeric,
-  height numeric,
-  age integer,
-  gender text,
-  activity_level text,
-  goal text,
-  protein_g numeric,
-  carbs_g numeric,
-  fat_g numeric,
-  macro_preset text,
-  updated_at timestamp with time zone default timezone('utc'::text, now())
+  id text primary key
 );
 
--- Ensure user_targets user_id allows null
+alter table public.user_targets add column if not exists user_id text;
+alter table public.user_targets add column if not exists target_calories integer default 2150;
+alter table public.user_targets add column if not exists tdee integer;
+alter table public.user_targets add column if not exists bmr integer;
+alter table public.user_targets add column if not exists weight numeric;
+alter table public.user_targets add column if not exists target_weight numeric;
+alter table public.user_targets add column if not exists height numeric;
+alter table public.user_targets add column if not exists age integer;
+alter table public.user_targets add column if not exists gender text;
+alter table public.user_targets add column if not exists activity_level text;
+alter table public.user_targets add column if not exists goal text;
+alter table public.user_targets add column if not exists protein_g numeric;
+alter table public.user_targets add column if not exists carbs_g numeric;
+alter table public.user_targets add column if not exists fat_g numeric;
+alter table public.user_targets add column if not exists macro_preset text;
+alter table public.user_targets add column if not exists updated_at timestamp with time zone default timezone('utc'::text, now());
+
 alter table public.user_targets drop constraint if exists user_targets_user_id_fkey;
 alter table public.user_targets alter column user_id drop not null;
 
