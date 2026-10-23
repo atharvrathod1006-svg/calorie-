@@ -252,10 +252,17 @@ window.handleSaveSupabaseConfig = async function() {
       
       try {
         const syncRes = await service.syncLocalMeals();
+        if (currentCalculation) {
+          await service.saveUserTargets(collectFormData(), currentCalculation);
+        }
+        const user = await service.getCurrentUser();
+        if (user) {
+          await service.upsertProfile(user);
+        }
         if (syncRes && syncRes.count > 0) {
-          if (alertMsg) alertMsg.textContent = `✓ Connected & uploaded ${syncRes.count} meals to Supabase!`;
+          if (alertMsg) alertMsg.textContent = `✓ Connected & uploaded ${syncRes.count} meals, profile and targets to Supabase!`;
         } else {
-          if (alertMsg) alertMsg.textContent = test.message || "✓ Connected to Supabase successfully!";
+          if (alertMsg) alertMsg.textContent = "✓ Connected & synced to Supabase successfully!";
         }
       } catch (syncErr) {
         console.warn("Auto-sync error:", syncErr);
@@ -290,12 +297,19 @@ window.handleSyncLocalMealsToCloud = async function() {
   }
 
   if (btn) btn.disabled = true;
-  if (alertMsg) alertMsg.textContent = "Syncing local meals to Supabase cloud...";
+  if (alertMsg) alertMsg.textContent = "Syncing local meals, profile & targets to Supabase cloud...";
 
   try {
     const res = await service.syncLocalMeals();
+    if (currentCalculation) {
+      await service.saveUserTargets(collectFormData(), currentCalculation);
+    }
+    const user = await service.getCurrentUser();
+    if (user) {
+      await service.upsertProfile(user);
+    }
     if (res.success) {
-      if (alertMsg) alertMsg.textContent = `✓ ${res.message || 'Synced successfully!'}`;
+      if (alertMsg) alertMsg.textContent = `✓ Meals, profile & targets synced to Supabase successfully!`;
       if (alertDot) alertDot.className = "w-2.5 h-2.5 rounded-full bg-emerald-500";
       await loadMeals();
     } else {
@@ -537,6 +551,11 @@ function calculateAndRender(forceAnimate = false) {
         renderResults(serverResult, false);
       }
     }).catch(() => {});
+  }
+
+  // 3. Save calculation metrics to Supabase user_targets table if connected
+  if (window.SupabaseService && window.SupabaseService.isConfigured()) {
+    window.SupabaseService.saveUserTargets(payload, instantResult);
   }
 }
 
@@ -2547,6 +2566,14 @@ window.handleEmailAuthSubmit = async function(event) {
           currentUser = await service.getCurrentUser();
           if (currentUser) {
             localStorage.setItem("nutriglance_user", JSON.stringify(currentUser));
+            try {
+              await service.upsertProfile(currentUser);
+              if (currentCalculation) {
+                await service.saveUserTargets(collectFormData(), currentCalculation);
+              }
+            } catch (syncErr) {
+              console.warn("Profile sync warning:", syncErr);
+            }
           }
           updateUserAuthUI();
           setTimeout(() => {
@@ -2564,6 +2591,14 @@ window.handleEmailAuthSubmit = async function(event) {
               currentUser = await service.getCurrentUser();
               if (currentUser) {
                 localStorage.setItem("nutriglance_user", JSON.stringify(currentUser));
+                try {
+                  await service.upsertProfile(currentUser);
+                  if (currentCalculation) {
+                    await service.saveUserTargets(collectFormData(), currentCalculation);
+                  }
+                } catch (syncErr) {
+                  console.warn("Profile sync warning:", syncErr);
+                }
               }
               updateUserAuthUI();
               setTimeout(() => {

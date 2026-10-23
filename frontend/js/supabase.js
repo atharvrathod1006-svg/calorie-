@@ -11,7 +11,50 @@ const SUPABASE_SQL_SCHEMA = `-- ================================================
 -- Copy and paste this into your Supabase SQL Editor:
 -- ========================================================
 
--- 1. Create Meals Table
+-- 1. Create Profiles Table (Stores user profile information)
+create table if not exists public.profiles (
+  id uuid references auth.users on delete cascade primary key,
+  email text,
+  full_name text,
+  avatar_url text,
+  created_at timestamp with time zone default timezone('utc'::text, now()),
+  updated_at timestamp with time zone default timezone('utc'::text, now())
+);
+
+-- Trigger to auto-create public.profiles entry when user signs up in auth.users
+create or replace function public.handle_new_user()
+returns trigger as $$
+begin
+  insert into public.profiles (id, email, full_name, avatar_url)
+  values (
+    new.id,
+    new.email,
+    coalesce(new.raw_user_meta_data->>'full_name', split_part(new.email, '@', 1)),
+    coalesce(new.raw_user_meta_data->>'avatar_url', '')
+  )
+  on conflict (id) do update set
+    email = excluded.email,
+    full_name = coalesce(excluded.full_name, public.profiles.full_name),
+    updated_at = now();
+  return new;
+end;
+$$ language plpgsql security definer;
+
+drop trigger if exists on_auth_user_created on auth.users;
+create trigger on_auth_user_created
+  after insert on auth.users
+  for each row execute procedure public.handle_new_user();
+
+-- Backfill any existing users from auth.users into public.profiles
+insert into public.profiles (id, email, full_name)
+select 
+  id, 
+  email, 
+  coalesce(raw_user_meta_data->>'full_name', split_part(email, '@', 1))
+from auth.users
+on conflict (id) do nothing;
+
+-- 2. Create Meals Table (Stores meal entries & macronutrients)
 create table if not exists public.meals (
   id text primary key,
   user_id text,
@@ -31,11 +74,13 @@ create table if not exists public.meals (
 alter table public.meals drop constraint if exists meals_user_id_fkey;
 alter table public.meals alter column user_id drop not null;
 
--- 2. Create User Target Goals Table
+-- 3. Create User Target Goals Table (Stores calorie, BMR, TDEE, and macro targets)
 create table if not exists public.user_targets (
   id text primary key,
   user_id text,
   target_calories integer default 2150,
+  tdee integer,
+  bmr integer,
   weight numeric,
   target_weight numeric,
   height numeric,
@@ -43,23 +88,35 @@ create table if not exists public.user_targets (
   gender text,
   activity_level text,
   goal text,
+  protein_g numeric,
+  carbs_g numeric,
+  fat_g numeric,
+  macro_preset text,
   updated_at timestamp with time zone default timezone('utc'::text, now())
 );
 
--- 3. Row Level Security (RLS) Configuration
+-- Ensure user_targets user_id allows null
+alter table public.user_targets drop constraint if exists user_targets_user_id_fkey;
+alter table public.user_targets alter column user_id drop not null;
+
+-- 4. Row Level Security (RLS) Configuration
+alter table public.profiles enable row level security;
 alter table public.meals enable row level security;
 alter table public.user_targets enable row level security;
 
 -- Drop any conflicting or restrictive policies
+drop policy if exists "Allow all profiles access" on public.profiles;
 drop policy if exists "Allow all meals access" on public.meals;
 drop policy if exists "Enable read access for all users" on public.meals;
 drop policy if exists "Enable insert for all users" on public.meals;
 drop policy if exists "Enable insert for authenticated users only" on public.meals;
 drop policy if exists "Allow all targets access" on public.user_targets;
+drop policy if exists "Allow all user_targets access" on public.user_targets;
 
 -- Create open RLS policies for public (allows both anon and authenticated users to read & write)
+create policy "Allow all profiles access" on public.profiles for all to public using (true) with check (true);
 create policy "Allow all meals access" on public.meals for all to public using (true) with check (true);
-create policy "Allow all targets access" on public.user_targets for all to public using (true) with check (true);
+create policy "Allow all user_targets access" on public.user_targets for all to public using (true) with check (true);
 `;
 
 const SupabaseService = {
@@ -417,6 +474,102 @@ const SupabaseService = {
       return data;
     } catch (e) {
       console.warn("Supabase fetchHistory exception:", e);
+      return null;
+    }
+  },
+
+  // -------------------------------------------------------------
+  // User Profiles & Calculated Targets via Supabase
+  // -------------------------------------------------------------
+  async upsertProfile(user) {
+    if (!this.client || !this.isConfigured() || !user || !user.id) return null;
+    try {
+      const profile = {
+        id: user.id,
+        email: user.email || "",
+        full_name: user.name || user.email?.split("@")[0] || "User",
+        avatar_url: user.picture || "",
+        updated_at: new Date().toISOString()
+      };
+      const { data, error } = await this.client.from("profiles").upsert(profile, { onConflict: "id" });
+      if (error) {
+        console.warn("Supabase upsertProfile error:", error);
+        return { error: error.message };
+      }
+      return { success: true, data };
+    } catch (e) {
+      console.warn("Supabase upsertProfile exception:", e);
+      return { error: e.message };
+    }
+  },
+
+  async fetchProfile(userId) {
+    if (!this.client || !this.isConfigured()) return null;
+    try {
+      const user = await this.getCurrentUser();
+      const uid = userId || user?.id;
+      if (!uid) return null;
+      const { data, error } = await this.client.from("profiles").select("*").eq("id", uid).maybeSingle();
+      if (error) {
+        console.warn("Supabase fetchProfile error:", error);
+        return null;
+      }
+      return data;
+    } catch (e) {
+      console.warn("Supabase fetchProfile exception:", e);
+      return null;
+    }
+  },
+
+  async saveUserTargets(payload, result) {
+    if (!this.client || !this.isConfigured()) return null;
+    try {
+      const user = await this.getCurrentUser();
+      const targetId = user?.id || "guest_targets";
+      const record = {
+        id: targetId,
+        user_id: user?.id || null,
+        target_calories: result?.target_calories || 2150,
+        tdee: result?.tdee || 2650,
+        bmr: result?.bmr || 1680,
+        weight: payload?.weight ? parseFloat(payload.weight) : null,
+        target_weight: payload?.target_weight ? parseFloat(payload.target_weight) : null,
+        height: payload?.height ? parseFloat(payload.height) : null,
+        age: payload?.age ? parseInt(payload.age) : null,
+        gender: payload?.gender || "male",
+        activity_level: payload?.activity || "moderate",
+        goal: payload?.goal || "maintain",
+        protein_g: result?.macros?.protein?.grams || null,
+        carbs_g: result?.macros?.carbs?.grams || null,
+        fat_g: result?.macros?.fat?.grams || null,
+        macro_preset: payload?.macro_preset || "balanced",
+        updated_at: new Date().toISOString()
+      };
+      const { data, error } = await this.client.from("user_targets").upsert(record, { onConflict: "id" });
+      if (error) {
+        console.warn("Supabase saveUserTargets error:", error);
+        return { error: error.message };
+      }
+      return { success: true, data };
+    } catch (e) {
+      console.warn("Supabase saveUserTargets exception:", e);
+      return { error: e.message };
+    }
+  },
+
+  async fetchUserTargets() {
+    if (!this.client || !this.isConfigured()) return null;
+    try {
+      const user = await this.getCurrentUser();
+      const targetId = user?.id || "guest_targets";
+      const { data, error } = await this.client.from("user_targets").select("*").eq("id", targetId).maybeSingle();
+      if (error) {
+        console.warn("Supabase fetchUserTargets error:", error);
+        return null;
+      }
+      return data;
+    } catch (e) {
+      console.warn("Supabase fetchUserTargets exception:", e);
       return null;
     }
   }
