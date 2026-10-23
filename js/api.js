@@ -3,6 +3,17 @@
  * High-performance client-side computation with offline resilience and Supabase cloud persistence.
  */
 
+function generateUUID() {
+  if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
+    return crypto.randomUUID();
+  }
+  return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, function(c) {
+    const r = Math.random() * 16 | 0;
+    const v = c === "x" ? r : (r & 0x3 | 0x8);
+    return v.toString(16);
+  });
+}
+
 const FALLBACK_FOODS = [
   { id: "p1", name: "Chicken Breast (Cooked, skinless)", category: "Protein", serving: "100g", calories: 165, protein: 31.0, carbs: 0.0, fat: 3.6, vegetarian: false },
   { id: "p2", name: "Salmon Fillet (Baked)", category: "Protein", serving: "100g", calories: 208, protein: 22.0, carbs: 0.0, fat: 13.0, vegetarian: false },
@@ -159,7 +170,7 @@ const Api = {
         servingLabel = `${grams}g`;
       }
       entry = {
-        id: Math.random().toString(36).substring(2, 9),
+        id: generateUUID(),
         date: entryDate,
         meal_type: mealData.meal_type || "breakfast",
         name: f ? f.name : "Food Item",
@@ -192,7 +203,7 @@ const Api = {
       }
 
       entry = {
-        id: Math.random().toString(36).substring(2, 9),
+        id: generateUUID(),
         date: entryDate,
         meal_type: mealData.meal_type || "breakfast",
         name: mealData.name || "Custom Food",

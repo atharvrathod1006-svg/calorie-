@@ -3,6 +3,22 @@
  * Handles direct Supabase database operations, authentication, and table syncing.
  */
 
+function isUUID(str) {
+  if (!str || typeof str !== "string") return false;
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str.trim());
+}
+
+function generateUUID() {
+  if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
+    return crypto.randomUUID();
+  }
+  return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, function(c) {
+    const r = Math.random() * 16 | 0;
+    const v = c === "x" ? r : (r & 0x3 | 0x8);
+    return v.toString(16);
+  });
+}
+
 const SUPABASE_STORAGE_URL_KEY = "nutriglance_supabase_url";
 const SUPABASE_STORAGE_KEY_KEY = "nutriglance_supabase_key";
 
@@ -221,7 +237,7 @@ const SupabaseService = {
       }
 
       // 2. Test Write/Insert Permissions (Catches RLS and foreign-key blocks immediately!)
-      const testId = "_ping_" + Math.random().toString(36).substring(2, 8);
+      const testId = generateUUID();
       const { error: insertErr } = await this.client.from("meals").insert([{
         id: testId,
         date: new Date().toISOString().split("T")[0],
@@ -247,15 +263,19 @@ const SupabaseService = {
   },
 
   async syncLocalMeals() {
-    if (!this.client) return { success: false, message: "Supabase not connected." };
+    if (!this.client || !this.isConfigured()) return { success: false, message: "Supabase not connected." };
     try {
       const local = JSON.parse(localStorage.getItem("calorie_meals") || "[]");
       if (!local || local.length === 0) {
         return { success: true, count: 0, message: "No local meals to sync." };
       }
 
+      const user = await this.getCurrentUser();
+      const validUserId = (user && isUUID(user.id)) ? user.id : null;
+
       const records = local.map(m => ({
-        id: m.id || Math.random().toString(36).substring(2, 10),
+        id: isUUID(m.id) ? m.id : generateUUID(),
+        user_id: (m.user_id && isUUID(m.user_id)) ? m.user_id : validUserId,
         date: m.date || new Date().toISOString().split("T")[0],
         meal_type: m.meal_type || "breakfast",
         name: m.name || "Food Item",
@@ -272,6 +292,13 @@ const SupabaseService = {
       if (error) {
         console.warn("Supabase syncLocalMeals error:", error);
         return { success: false, message: error.message };
+      }
+      return { success: true, count: records.length, message: `Successfully synced ${records.length} meals to Supabase!` };
+    } catch (e) {
+      console.warn("Supabase syncLocalMeals exception:", e);
+      return { success: false, message: e.message };
+    }
+  },
       }
       return { success: true, count: records.length, message: `Successfully synced ${records.length} meals to Supabase!` };
     } catch (e) {
@@ -406,15 +433,16 @@ const SupabaseService = {
   },
 
   async insertMeal(meal) {
-    if (!this.client) return null;
+    if (!this.client || !this.isConfigured()) return null;
     try {
       const user = await this.getCurrentUser();
+      const validUserId = (user && isUUID(user.id)) ? user.id : (isUUID(meal.user_id) ? meal.user_id : null);
       const record = {
-        id: meal.id || Math.random().toString(36).substring(2, 10),
-        user_id: (user && user.id) ? user.id : (meal.user_id || null),
-        date: meal.date,
+        id: isUUID(meal.id) ? meal.id : generateUUID(),
+        user_id: validUserId,
+        date: meal.date || new Date().toISOString().split("T")[0],
         meal_type: meal.meal_type || "breakfast",
-        name: meal.name,
+        name: meal.name || "Food Item",
         serving: meal.serving || "",
         grams: meal.grams ? parseFloat(meal.grams) : null,
         calories: parseInt(meal.calories || 0),
@@ -497,7 +525,7 @@ const SupabaseService = {
   // User Profiles & Calculated Targets via Supabase
   // -------------------------------------------------------------
   async upsertProfile(user) {
-    if (!this.client || !this.isConfigured() || !user || !user.id) return null;
+    if (!this.client || !this.isConfigured() || !user || !user.id || !isUUID(user.id)) return null;
     try {
       const profile = {
         id: user.id,
@@ -523,7 +551,7 @@ const SupabaseService = {
     try {
       const user = await this.getCurrentUser();
       const uid = userId || user?.id;
-      if (!uid) return null;
+      if (!uid || !isUUID(uid)) return null;
       const { data, error } = await this.client.from("profiles").select("*").eq("id", uid).maybeSingle();
       if (error) {
         console.warn("Supabase fetchProfile error:", error);
@@ -540,10 +568,12 @@ const SupabaseService = {
     if (!this.client || !this.isConfigured()) return null;
     try {
       const user = await this.getCurrentUser();
-      const targetId = user?.id || "guest_targets";
+      const validUserId = (user && isUUID(user.id)) ? user.id : null;
+      // Target ID is UUID compatible: user.id if logged in, or deterministic zero-UUID for guests
+      const targetId = validUserId || "00000000-0000-0000-0000-000000000000";
       const record = {
         id: targetId,
-        user_id: user?.id || null,
+        user_id: validUserId,
         target_calories: result?.target_calories || 2150,
         tdee: result?.tdee || 2650,
         bmr: result?.bmr || 1680,
