@@ -93,30 +93,28 @@ alter table public.meals add column if not exists created_at timestamp with time
 alter table public.meals drop constraint if exists meals_user_id_fkey;
 alter table public.meals alter column user_id drop not null;
 
--- 3. Create or Upgrade User Targets Table
-create table if not exists public.user_targets (
-  id text primary key
+-- 3. Create or Reset User Targets Table (Cleanly recreate since it stores user calculation targets)
+drop table if exists public.user_targets cascade;
+
+create table public.user_targets (
+  id text primary key,
+  user_id text,
+  target_calories integer default 2150,
+  tdee integer,
+  bmr integer,
+  weight numeric,
+  target_weight numeric,
+  height numeric,
+  age integer,
+  gender text,
+  activity_level text,
+  goal text,
+  protein_g numeric,
+  carbs_g numeric,
+  fat_g numeric,
+  macro_preset text,
+  updated_at timestamp with time zone default timezone('utc'::text, now())
 );
-
-alter table public.user_targets add column if not exists user_id text;
-alter table public.user_targets add column if not exists target_calories integer default 2150;
-alter table public.user_targets add column if not exists tdee integer;
-alter table public.user_targets add column if not exists bmr integer;
-alter table public.user_targets add column if not exists weight numeric;
-alter table public.user_targets add column if not exists target_weight numeric;
-alter table public.user_targets add column if not exists height numeric;
-alter table public.user_targets add column if not exists age integer;
-alter table public.user_targets add column if not exists gender text;
-alter table public.user_targets add column if not exists activity_level text;
-alter table public.user_targets add column if not exists goal text;
-alter table public.user_targets add column if not exists protein_g numeric;
-alter table public.user_targets add column if not exists carbs_g numeric;
-alter table public.user_targets add column if not exists fat_g numeric;
-alter table public.user_targets add column if not exists macro_preset text;
-alter table public.user_targets add column if not exists updated_at timestamp with time zone default timezone('utc'::text, now());
-
-alter table public.user_targets drop constraint if exists user_targets_user_id_fkey;
-alter table public.user_targets alter column user_id drop not null;
 
 -- 4. Row Level Security (RLS) Configuration
 alter table public.profiles enable row level security;
