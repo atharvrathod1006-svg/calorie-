@@ -107,19 +107,31 @@ alter table public.profiles enable row level security;
 alter table public.meals enable row level security;
 alter table public.user_targets enable row level security;
 
--- Drop any conflicting or restrictive policies
-drop policy if exists "Allow all profiles access" on public.profiles;
-drop policy if exists "Allow all meals access" on public.meals;
-drop policy if exists "Enable read access for all users" on public.meals;
-drop policy if exists "Enable insert for all users" on public.meals;
-drop policy if exists "Enable insert for authenticated users only" on public.meals;
-drop policy if exists "Allow all targets access" on public.user_targets;
-drop policy if exists "Allow all user_targets access" on public.user_targets;
+-- Open policies with DO EXCEPTION blocks so they never fail on duplicates
+do $$
+begin
+  drop policy if exists "Allow all profiles access" on public.profiles;
+  create policy "Allow all profiles access" on public.profiles for all to public using (true) with check (true);
+exception
+  when duplicate_object then null;
+end $$;
 
--- Create open RLS policies for public (allows both anon and authenticated users to read & write)
-create policy "Allow all profiles access" on public.profiles for all to public using (true) with check (true);
-create policy "Allow all meals access" on public.meals for all to public using (true) with check (true);
-create policy "Allow all user_targets access" on public.user_targets for all to public using (true) with check (true);
+do $$
+begin
+  drop policy if exists "Allow all meals access" on public.meals;
+  create policy "Allow all meals access" on public.meals for all to public using (true) with check (true);
+exception
+  when duplicate_object then null;
+end $$;
+
+do $$
+begin
+  drop policy if exists "Allow all user_targets access" on public.user_targets;
+  drop policy if exists "Allow all targets access" on public.user_targets;
+  create policy "Allow all user_targets access" on public.user_targets for all to public using (true) with check (true);
+exception
+  when duplicate_object then null;
+end $$;
 `;
 
 const SupabaseService = {
